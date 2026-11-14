@@ -41,7 +41,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 #board{--bh:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));--bs:clamp(32px,calc(var(--bh)/13),52px);height:100%;display:grid;grid-template-rows:1fr auto 1fr;gap:6px 10px}
 /* staand scherm (telefoon): het hele speelveld een kwartslag draaien, zodat de liggende indeling blijft */
 @media (orientation:portrait){#board{--bh:calc(100dvw - 24px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px));
-  position:fixed;left:50%;top:50%;width:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));height:var(--bh);transform:translate(-50%,-50%) rotate(90deg)}}
+  position:fixed;left:50%;top:50%;width:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));height:var(--bh);transform:translate(-50%,-50%) rotate(90deg)}
+  #board.flip{transform:translate(-50%,-50%) rotate(270deg)}}
+/* one-sided view omgedraaid: hele speelveld 180° (voor wie aan de andere kant zit of het apparaat omdraait) */
+@media (orientation:landscape){#board.flip{transform:rotate(180deg)}}
 .bar{grid-column:1/-1;grid-row:2;position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;pointer-events:none}
 .bar button{pointer-events:auto;box-shadow:0 0 0 5px var(--bg);flex:none;min-height:44px;padding:0 14px;background:var(--panel2);display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
 .bar button b{font-family:var(--f-num);font-size:24px;font-weight:700;letter-spacing:0}
@@ -406,7 +409,7 @@ function cpanelHtml(p){
 
 /* ==== Weergave ==== */
 function render(){
-  const L=lay();board.style.gridTemplateColumns=L[0];
+  const L=lay();board.style.gridTemplateColumns=L[0];board.classList.toggle('flip',!!(S.oneSide&&S.flip));
   let h='';
   for(let i=0;i<S.n;i++){
     const p=S.players[i],col=COLORS[p.color],[c,r]=L[1][i];
@@ -448,6 +451,7 @@ function bar(){
     <button data-act="mana" class="ic" aria-label="Mana and storm">${ico(I_MANA)}</button>
     <button data-act="pc" class="ic${S.pc.on?' on':''}" aria-label="Planechase">${I_PC}</button>
     <button data-act="new" class="${sure?'sure':'ic'}" aria-label="Restart">${ico(I_RESET)}${sure?'<b>?</b>':''}</button>
+    ${S.oneSide?`<button data-act="flip" class="ic" aria-label="Rotate view 180 degrees">${ico(I_TURN)}</button>`:''}
     <button data-act="menu" class="ic" aria-label="Names and settings">${ICON_MENU}</button>`;
 }
 function update(i){
@@ -549,6 +553,7 @@ board.addEventListener('click',e=>{
   else if(a==='first')pickFirst();
   else if(a==='endturn')endTurn();
   else if(a==='hist')showHistory();
+  else if(a==='flip'){S.flip=!S.flip;save();render()}
   else if(a==='new'){clearTimeout(sureT);
     if(!sure){sure=true;bar();sureT=setTimeout(()=>{sure=false;bar()},3000)}
     else{sure=false;S=fresh(S.n,S.start,S);open.clear();openCtr.clear();pend.fill(0);save();render()}}
