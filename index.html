@@ -103,10 +103,11 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 /* spelertellers (poison = gifdruppel, rad = stralingssymbool): … rechtsboven, actieve tellers linksboven */
 .more{position:absolute;top:6px;right:8px;z-index:2;width:44px;height:40px;display:grid;place-items:center;color:inherit;opacity:.75}
 .more svg{width:24px;height:24px}
-.ctrs{position:absolute;top:8px;left:8px;z-index:2;max-width:42%;display:flex;flex-wrap:wrap;gap:6px}
-.ctr{position:relative;height:40px;padding:0 10px 0 4px;display:flex;align-items:center;gap:6px;background:rgb(0 0 0/.3);color:#fff}
-.ctr svg{width:30px;height:30px;flex:none}
-.ctr b{font-family:var(--f-num);font-weight:900;font-size:24px;min-width:1ch;text-align:center;font-variant-numeric:tabular-nums}
+/* tellers schalen mee met het vak, zodat ze op een telefoon klein blijven en naast elkaar passen */
+.ctrs{--ch:clamp(26px,12cqh,40px);position:absolute;top:8px;left:8px;z-index:2;max-width:46%;display:flex;flex-wrap:wrap;gap:4px}
+.ctr{position:relative;height:var(--ch);padding:0 calc(var(--ch)*.22) 0 3px;display:flex;align-items:center;gap:4px;background:rgb(0 0 0/.3);color:#fff}
+.ctr svg{width:calc(var(--ch)*.75);height:calc(var(--ch)*.75);flex:none}
+.ctr b{font-family:var(--f-num);font-weight:900;font-size:calc(var(--ch)*.6);min-width:1ch;text-align:center;font-variant-numeric:tabular-nums}
 .ctr button{position:absolute;top:0;bottom:0;width:50%}
 .ctr button:first-of-type{left:0}.ctr button:last-of-type{right:0}
 .ctr button:active{background:rgb(0 0 0/.25)}
@@ -138,13 +139,17 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 /* beurtvolgorde: actieve speler krijgt een gouden kader en een brede End turn-strook onderin (draait mee met de speler) */
 .tile.turn::before{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;border:6px solid var(--accent);animation:turnglow 1.6s ease-in-out infinite}
 @keyframes turnglow{0%,100%{box-shadow:inset 0 0 0 2px #000,inset 0 0 24px rgb(255 182 39/.35)}50%{box-shadow:inset 0 0 0 2px #000,inset 0 0 70px rgb(255 182 39/.75)}}
-.endturn{--sh:clamp(52px,16cqh,76px);position:absolute;left:6px;right:6px;bottom:6px;z-index:4;height:var(--sh);display:flex;align-items:center;justify-content:center;gap:14px;
+.inner{--sh:clamp(44px,16cqh,76px)}
+.endturn{position:absolute;left:6px;right:6px;bottom:6px;z-index:4;height:var(--sh);display:flex;align-items:center;justify-content:center;gap:14px;
   background:var(--accent);color:#17151d;font-weight:700;font-size:clamp(17px,5cqh,24px);letter-spacing:.1em;text-transform:uppercase;animation:endpulse 1.6s ease-in-out infinite}
 .endturn svg{width:1.2em;height:1.2em}
 .endturn:active{filter:brightness(.85)}
 @keyframes endpulse{0%,100%{box-shadow:0 0 0 0 rgb(255 182 39/.0)}50%{box-shadow:0 0 22px 4px rgb(255 182 39/.65)}}
-.tile.turn .life{bottom:clamp(52px,16cqh,76px);font-size:min(42cqh,30cqw)}
-.tile.turn .cmdbtn,.tile.turn .opps{bottom:calc(clamp(52px,16cqh,76px) + 14px)}
+/* in de beurt: getal in de ruimte boven de strook; het schildje links naast de strook; tegenstanderblokjes erboven */
+.tile.turn .life{top:clamp(22px,9cqh,44px);bottom:calc(var(--sh) + 6px);font-size:min(38cqh,30cqw)}
+.tile.turn .cmdbtn{left:6px;bottom:6px;transform:none;height:var(--sh);width:var(--sh);min-height:0;padding:0;justify-content:center;flex-direction:column;gap:0;z-index:5;background:rgb(0 0 0/.35);color:#fff}
+.tile.turn:has(.cmdbtn) .endturn{left:calc(var(--sh) + 12px)}
+.tile.turn .opps{bottom:calc(var(--sh) + 14px)}
 .tile.turn .out{display:none}
 @media (prefers-reduced-motion:reduce){.tile.turn::before,.endturn{animation:none}}
 .bar .tturn{background:var(--accent);color:#17151d}
@@ -395,7 +400,7 @@ function render(){
       <div class="zone" data-z="-1"></div><div class="zone" data-z="1"></div>
       <span class="sign m">−</span><span class="sign p">+</span>
       <div class="name" data-act="name"></div><div class="delta"></div><div class="life"></div><div class="out"></div><div class="start">Goes first</div>
-      ${S.cmdRow?oppRow(i):`<button class="cmdbtn" data-act="cmd" aria-label="Commander damage">${ICON_CMD}<span></span></button>`}
+      ${rowOk()?oppRow(i):`<button class="cmdbtn" data-act="cmd" aria-label="Commander damage">${ICON_CMD}<span></span></button>`}
       <div class="ctrs"></div><button class="more" data-act="more" aria-label="Player counters">${ico(I_MORE)}</button>
       ${tOn()&&S.tt.active===i?`<button class="endturn" data-act="endturn">End turn${ico('<path d="M5 12h13M13 6l6 6-6 6"/>')}</button>`:''}
       <div class="cmd" hidden></div><div class="cmd cpanel" hidden></div></div></div>`;
@@ -403,8 +408,12 @@ function render(){
   if(pcOn()){h+=`<div class="tile plane" style="grid-column:-2/-1;grid-row:1/4"></div>`;if(!PL.cards&&!PL.state)loadPlanes()}
   board.innerHTML=h+`<div class="bar${vert()?' vert':''}"></div>`;
   for(let i=0;i<S.n;i++)update(i);
-  bar();renderPlane();
+  bar();renderPlane();lastRow=rowOk();
 }
+/* tegenstanderblokjes passen niet bij 5-6 spelers op een klein scherm (telefoon): dan altijd het schildje met popup */
+const smallMq=matchMedia('(max-width:599px),(max-height:599px)');
+const rowOk=()=>!!S.cmdRow&&!(S.n>=5&&smallMq.matches);
+let lastRow=null;const reRow=()=>{if(rowOk()!==lastRow)render()};smallMq.addEventListener?.('change',reRow);addEventListener('resize',reRow);
 /* tegenstanders als blokjes onderin het vak: linkerhelft −1, rechterhelft +1 commander damage van die tegenstander */
 function oppRow(i){
   let r='';
