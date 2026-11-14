@@ -100,6 +100,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .life{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-num);font-weight:900;font-size:min(52cqh,34cqw);line-height:1;font-variant-numeric:tabular-nums;pointer-events:none}
 .delta{position:absolute;left:0;right:0;top:calc(50% - min(34cqh,22cqw));text-align:center;font-family:var(--f-num);font-weight:700;font-size:min(13cqh,8cqw);pointer-events:none;opacity:0;transition:opacity .25s}
 .delta.on{opacity:.85}
+.opps{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:clamp(4px,1.5cqw,8px);padding-inline:8px}
+.chip{position:relative;width:clamp(52px,18cqw,96px);height:clamp(44px,17cqh,64px);background:var(--c) center/cover;outline:2px solid rgb(0 0 0/.25);outline-offset:-2px;display:grid;place-items:center;flex:none}
+.chip::before{content:"−      +";position:absolute;inset:auto 0 1px;text-align:center;font-size:11px;font-weight:600;color:#fff;opacity:.75;white-space:pre;text-shadow:0 1px 3px rgb(0 0 0/.9);pointer-events:none}
+.chip b{position:relative;z-index:1;font-family:var(--f-num);font-weight:900;font-size:clamp(20px,6cqh,28px);color:#fff;text-shadow:0 1px 6px rgb(0 0 0/.9);pointer-events:none;margin-top:-6px}
+.chip button{position:absolute;top:0;bottom:0;width:50%}
+.chip button:first-of-type{left:0}.chip button:last-of-type{right:0}
+.chip button:active{background:rgb(0 0 0/.25)}
+.chip.w{outline:3px solid var(--warn);outline-offset:-3px}.chip.d{outline:3px solid var(--danger);outline-offset:-3px}
 .cmdbtn{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;min-height:44px;padding:6px 16px;background:rgb(0 0 0/.22);font-weight:600;font-size:16px;font-variant-numeric:tabular-nums}
 .cmdbtn svg{width:20px;height:20px}
 .cmdbtn.hot{background:var(--danger);color:#1a0d0b}
@@ -304,13 +312,21 @@ function render(){
       <div class="zone" data-z="-1"></div><div class="zone" data-z="1"></div>
       <span class="sign m">−</span><span class="sign p">+</span>
       <div class="name" data-act="name"></div><div class="delta"></div><div class="life"></div><div class="out"></div><div class="start">Goes first</div>
-      <button class="cmdbtn" data-act="cmd" aria-label="Commander damage">${ICON_CMD}<span></span></button>
+      ${S.cmdRow?oppRow(i):`<button class="cmdbtn" data-act="cmd" aria-label="Commander damage">${ICON_CMD}<span></span></button>`}
       <div class="cmd" hidden></div></div></div>`;
   }
   if(pcOn()){h+=`<div class="tile plane" style="grid-column:-2/-1;grid-row:1/4"></div>`;if(!PL.cards&&!PL.state)loadPlanes()}
   board.innerHTML=h+`<div class="bar${vert()?' vert':''}"></div>`;
   for(let i=0;i<S.n;i++)update(i);
   bar();renderPlane();
+}
+/* tegenstanders als blokjes onderin het vak: linkerhelft −1, rechterhelft +1 commander damage van die tegenstander */
+function oppRow(i){
+  let r='';
+  for(let j=0;j<S.n;j++){if(j===i)continue;const o=S.players[j],a=okArt(o.art);
+    r+=`<div class="chip" data-f="${j}" style="--c:${COLORS[o.color].c}${a?`;background-image:url('${a}')`:''}"><b></b>
+      <button data-act="cd" data-f="${j}" data-d="-1" aria-label="Commander damage from ${esc(o.name)} minus 1"></button><button data-act="cd" data-f="${j}" data-d="1" aria-label="Commander damage from ${esc(o.name)} plus 1"></button></div>`}
+  return `<div class="opps">${r}</div>`;
 }
 function bar(){
   const tint=(d,c)=>ico(d).replace('<svg ',`<svg class="${c}" `);
@@ -328,8 +344,8 @@ function update(i){
   const nm=el.querySelector('.name');if(!nm.querySelector('input'))nm.textContent=p.name;
   el.querySelector('.life').textContent=p.life;
   const tot=p.cmd.slice(0,S.n).reduce((a,b)=>a+b,0),cb=el.querySelector('.cmdbtn');
-  cb.querySelector('span').textContent=tot?tot:'';
-  cb.classList.toggle('hot',p.cmd.some((v,j)=>j<S.n&&v>=15));
+  if(cb){cb.querySelector('span').textContent=tot?tot:'';cb.classList.toggle('hot',p.cmd.some((v,j)=>j<S.n&&v>=15))}
+  el.querySelectorAll('.chip').forEach(c=>{const v=p.cmd[+c.dataset.f];c.querySelector('b').textContent=v;c.classList.toggle('w',v>=15&&v<LETHAL);c.classList.toggle('d',v>=LETHAL)});
   const dead=isDead(p);el.classList.toggle('dead',dead);
   el.querySelector('.out').textContent=p.life<=0?'Eliminated':`${LETHAL} commander damage`;
   const d=pend[i],de=el.querySelector('.delta');de.textContent=d>0?'+'+d:d<0?'−'+(-d):'';de.classList.toggle('on',!!d);
@@ -475,6 +491,7 @@ function showMenu(){
     <div class="grp"><span class="lbl">Names and colors</span>${pl}</div>
     <div class="grp"><span class="lbl">Theme</span><div class="seg">${[['auto','Auto'],['light','Light'],['dark','Dark']].map(([k,t])=>`<button data-theme-set="${k}" class="${S.theme===k?'on':''}">${t}</button>`).join('')}</div></div>
     <button class="tog" data-link><span>Commander damage reduces life</span><i class="sw ${S.link?'on':''}"></i></button>
+    <button class="tog" data-cmdrow><span>Show opponents for commander damage</span><i class="sw ${S.cmdRow?'on':''}"></i></button>
     <div class="acts"><button class="new" data-close>Done</button></div></div>`;
   sheet.hidden=false;
 }
@@ -482,6 +499,7 @@ sheet.addEventListener('click',e=>{
   if(e.target===sheet){sheet.hidden=true;return}
   const b=e.target.closest('button');if(!b)return;const ds=b.dataset;
   if('link' in ds){S.link=!S.link;save();showMenu()}
+  else if('cmdrow' in ds){S.cmdRow=!S.cmdRow;open.clear();save();render();showMenu()}
   else if(ds.themeSet){S.theme=ds.themeSet;save();applyTheme();showMenu()}
   else if(ds.pall){const on=ds.pall==='1',ids=new Set(planeFilter().map(c=>c.id));S.pc.off=on?S.pc.off.filter(x=>!ids.has(x)):[...new Set([...S.pc.off,...ids])];save();listPlanes()}
   else if('pdone' in ds){sheet.hidden=true;render()}
