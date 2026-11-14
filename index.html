@@ -514,16 +514,18 @@ sheet.addEventListener('input',e=>{if(e.target.id==='pf')return listPlanes();con
 sheet.addEventListener('change',e=>{const id=e.target.dataset.pid;if(!id)return;const o=new Set(S.pc.off);e.target.checked?o.delete(id):o.add(id);S.pc.off=[...o];save();planeCount()});
 
 /* ==== Planechase ==== */
-const PKEY='lt-planes-v1';let PL={cards:null,map:null,state:''},pRolling=false;
+const PKEY='lt-planes-v2';let PL={cards:null,map:null,state:''},pRolling=false;
 async function loadPlanes(){
   if(PL.cards||PL.state==='busy')return;
-  const use=cards=>{PL.cards=cards;PL.map=new Map(cards.map(c=>[c.id,c]));PL.state=''};
+  /* test- en grapkaarten (Scryfall set_type 'funny', bijv. Black Lotus Unknown: MagicCon Chicago, Black Lotus Lounge) één keer standaard uit */
+  const use=cards=>{PL.cards=cards;PL.map=new Map(cards.map(c=>[c.id,c]));PL.state='';
+    if(!S.pc.defs){S.pc.off=[...new Set([...S.pc.off,...cards.filter(c=>c.fun).map(c=>c.id)])];S.pc.defs=1;S.pc.deck=[];save()}};
   try{const c=JSON.parse(localStorage.getItem(PKEY));if(c?.cards?.length&&Date.now()-c.t<30*864e5){use(c.cards);renderPlane();return}}catch(e){}
   PL.state='busy';renderPlane();
   try{
     let url='https://api.scryfall.com/cards/search?q=layout%3Aplanar&unique=cards&order=name';const out=[];
     while(url){const r=await fetch(url,{headers:{Accept:'application/json'}});if(!r.ok)throw r.status;const j=await r.json();
-      for(const c of j.data){const img=okArt(c.image_uris?.large);if(img)out.push({id:c.id,name:c.name,set:(c.set||'').toUpperCase(),ph:/Phenomenon/.test(c.type_line),img})}
+      for(const c of j.data){const img=okArt(c.image_uris?.large);if(img)out.push({id:c.id,name:c.name,set:(c.set||'').toUpperCase(),ph:/Phenomenon/.test(c.type_line),fun:c.set_type==='funny',img})}
       url=j.has_more&&/^https:\/\/api\.scryfall\.com\//.test(j.next_page)?j.next_page:null;if(url)await new Promise(r=>setTimeout(r,120))}
     use(out);try{localStorage.setItem(PKEY,JSON.stringify({t:Date.now(),cards:out}))}catch(e){}
   }catch(e){PL.state='err'}
