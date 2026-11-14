@@ -201,8 +201,17 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 #pop .pcm .tog{background:none;font-size:19px}
 .pcrow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .box h2 small{font-family:var(--f-ui);font-size:15px;font-weight:600;color:var(--muted);margin-left:8px}
-.plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:4px 12px;max-height:50vh;overflow:auto;align-content:start}
-.prow{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:2px 10px;padding:6px 8px;background:var(--panel2);cursor:pointer}
+.plist{display:grid;gap:6px;max-height:55vh;overflow:auto;align-content:start}
+.pset{background:var(--panel2)}
+.pshead{display:flex;align-items:center;gap:12px;padding:0 8px 0 14px}
+.pshead input{flex:none;width:24px;height:24px;accent-color:var(--accent)}
+.psname{flex:1;min-width:0;min-height:56px;display:flex;align-items:center;gap:12px;text-align:left}
+.psname span{flex:1;min-width:0;font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.psname small{font-size:14px;color:var(--muted);white-space:nowrap}
+.psname svg{flex:none;width:22px;height:22px;color:var(--muted);transition:transform .2s}
+.psname.open svg{transform:rotate(180deg)}
+.pcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px 10px;padding:0 10px 10px}
+.prow{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:2px 10px;padding:6px 8px;background:var(--panel);cursor:pointer}
 .prow input{width:22px;height:22px;grid-row:span 2;accent-color:var(--accent)}
 .prow span{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .prow small{font-size:12px;color:var(--muted)}
@@ -473,6 +482,7 @@ sheet.addEventListener('click',e=>{
   else if(ds.themeSet){S.theme=ds.themeSet;save();applyTheme();showMenu()}
   else if(ds.pall){const on=ds.pall==='1',ids=new Set(planeFilter().map(c=>c.id));S.pc.off=on?S.pc.off.filter(x=>!ids.has(x)):[...new Set([...S.pc.off,...ids])];save();listPlanes()}
   else if('pdone' in ds){sheet.hidden=true;render()}
+  else if(ds.open){openSets.has(ds.open)?openSets.delete(ds.open):openSets.add(ds.open);listPlanes()}
   else if(ds.col){const[i,k]=ds.col.split(':').map(Number);S.players[i].color=k;save();render();showMenu()}
   else if('fs' in ds){(document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen({navigationUI:'hide'}))?.catch(()=>{})}
   else if('close' in ds)sheet.hidden=true;
@@ -511,10 +521,13 @@ sheet.addEventListener('submit',async e=>{
 /* gekozen art bewaren voor offline gebruik (service worker leest deze cache) */
 function keepArt(u){try{caches.open('lt-art').then(c=>fetch(u,{mode:'no-cors'}).then(r=>c.put(u,r))).catch(()=>{})}catch(e){}}
 sheet.addEventListener('input',e=>{if(e.target.id==='pf')return listPlanes();const i=e.target.dataset.name;if(i==null)return;S.players[+i].name=e.target.value||`Player ${+i+1}`;save();update(+i)});
-sheet.addEventListener('change',e=>{const id=e.target.dataset.pid;if(!id)return;const o=new Set(S.pc.off);e.target.checked?o.delete(id):o.add(id);S.pc.off=[...o];save();planeCount()});
+sheet.addEventListener('change',e=>{
+  const{pid,set}=e.target.dataset;if(!pid&&!set)return;const o=new Set(S.pc.off);
+  for(const id of set?PL.cards.filter(c=>c.set===set).map(c=>c.id):[pid])e.target.checked?o.delete(id):o.add(id);
+  S.pc.off=[...o];save();listPlanes()});
 
 /* ==== Planechase ==== */
-const PKEY='lt-planes-v2';let PL={cards:null,map:null,state:''},pRolling=false;
+const PKEY='lt-planes-v3';let PL={cards:null,map:null,state:''},pRolling=false;
 async function loadPlanes(){
   if(PL.cards||PL.state==='busy')return;
   /* test- en grapkaarten (Scryfall set_type 'funny', bijv. Black Lotus Unknown: MagicCon Chicago, Black Lotus Lounge) één keer standaard uit */
@@ -525,7 +538,7 @@ async function loadPlanes(){
   try{
     let url='https://api.scryfall.com/cards/search?q=layout%3Aplanar&unique=cards&order=name';const out=[];
     while(url){const r=await fetch(url,{headers:{Accept:'application/json'}});if(!r.ok)throw r.status;const j=await r.json();
-      for(const c of j.data){const img=okArt(c.image_uris?.large);if(img)out.push({id:c.id,name:c.name,set:(c.set||'').toUpperCase(),ph:/Phenomenon/.test(c.type_line),fun:c.set_type==='funny',img})}
+      for(const c of j.data){const img=okArt(c.image_uris?.large);if(img)out.push({id:c.id,name:c.name,set:(c.set||'').toUpperCase(),setName:c.set_name||'',ph:/Phenomenon/.test(c.type_line),fun:c.set_type==='funny',img})}
       url=j.has_more&&/^https:\/\/api\.scryfall\.com\//.test(j.next_page)?j.next_page:null;if(url)await new Promise(r=>setTimeout(r,120))}
     use(out);try{localStorage.setItem(PKEY,JSON.stringify({t:Date.now(),cards:out}))}catch(e){}
   }catch(e){PL.state='err'}
@@ -579,11 +592,20 @@ function showPlanes(){
     <div class="acts"><button class="new" data-pdone>Done</button></div></div>`;
   sheet.hidden=false;loadPlanes();listPlanes();
 }
+/* per set één regel met vinkje (aan/uit/gemengd); tik op de setnaam om de losse kaarten uit te klappen */
+const openSets=new Set();
 function listPlanes(){
   const l=$('#plist');if(!l)return;
   if(!PL.cards){l.innerHTML=`<p class="msg">${PL.state==='err'?'Could not load the planes. Check the internet connection.':'Loading planes…'}</p>`;return}
-  const off=new Set(S.pc.off);
-  l.innerHTML=planeFilter().map(c=>`<label class="prow"><input type="checkbox" data-pid="${c.id}"${off.has(c.id)?'':' checked'}><span>${esc(c.name)}</span><small>${esc(c.set)}${c.ph?' · Phenomenon':''}</small></label>`).join('')||'<p class="msg">No planes match.</p>';
+  const off=new Set(S.pc.off),q=($('#pf')?.value||'').trim(),sets=new Map();
+  for(const c of planeFilter()){if(!sets.has(c.set))sets.set(c.set,[]);sets.get(c.set).push(c)}
+  const order=[...sets].sort(([,a],[,b])=>a[0].fun-b[0].fun||(a[0].setName||a[0].set).localeCompare(b[0].setName||b[0].set));
+  l.innerHTML=order.map(([k,cs])=>{const on=cs.filter(c=>!off.has(c.id)).length,op=q||openSets.has(k);
+    return `<div class="pset"><div class="pshead"><input type="checkbox" data-set="${k}"${on?' checked':''} data-mixed="${on&&on<cs.length?1:0}" aria-label="All planes in ${esc(cs[0].setName||k)}">
+      <button class="psname${op?' open':''}" data-open="${k}"><span>${esc(cs[0].setName||k)}</span><small>${cs[0].fun?'Test cards · ':''}${on}/${cs.length}</small>${ico('<path d="M6 9l6 6 6-6"/>')}</button></div>
+      ${op?`<div class="pcards">${cs.map(c=>`<label class="prow"><input type="checkbox" data-pid="${c.id}"${off.has(c.id)?'':' checked'}><span>${esc(c.name)}</span><small>${c.ph?'Phenomenon':'Plane'}</small></label>`).join('')}</div>`:''}</div>`}).join('')
+    ||'<p class="msg">No planes match.</p>';
+  l.querySelectorAll('[data-mixed="1"]').forEach(x=>x.indeterminate=true);
   planeCount();
 }
 function planeCount(){const e=$('#pcount');if(e&&PL.cards)e.textContent=`${PL.cards.length-S.pc.off.length}/${PL.cards.length}`}
