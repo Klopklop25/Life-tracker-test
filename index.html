@@ -135,6 +135,40 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .tile.pick::after{content:"";position:absolute;inset:0;z-index:4;pointer-events:none;border:6px solid var(--accent);box-shadow:inset 0 0 0 2px #000,inset 0 0 40px rgb(255 182 39/.55)}
 .start{position:absolute;z-index:5;top:max(40px,calc(50% - min(26cqh,17cqw) - 34px));left:50%;transform:translateX(-50%);padding:6px 18px;background:var(--accent);color:#17151d;font-weight:700;font-size:16px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;box-shadow:0 4px 14px rgb(0 0 0/.5);pointer-events:none;display:none}
 .tile.first .start{display:block}
+/* beurtvolgorde: actieve speler krijgt een gouden kader en een brede End turn-strook onderin (draait mee met de speler) */
+.tile.turn::before{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;border:6px solid var(--accent);animation:turnglow 1.6s ease-in-out infinite}
+@keyframes turnglow{0%,100%{box-shadow:inset 0 0 0 2px #000,inset 0 0 24px rgb(255 182 39/.35)}50%{box-shadow:inset 0 0 0 2px #000,inset 0 0 70px rgb(255 182 39/.75)}}
+.endturn{--sh:clamp(52px,16cqh,76px);position:absolute;left:6px;right:6px;bottom:6px;z-index:4;height:var(--sh);display:flex;align-items:center;justify-content:center;gap:14px;
+  background:var(--accent);color:#17151d;font-weight:700;font-size:clamp(17px,5cqh,24px);letter-spacing:.1em;text-transform:uppercase;animation:endpulse 1.6s ease-in-out infinite}
+.endturn svg{width:1.2em;height:1.2em}
+.endturn:active{filter:brightness(.85)}
+@keyframes endpulse{0%,100%{box-shadow:0 0 0 0 rgb(255 182 39/.0)}50%{box-shadow:0 0 22px 4px rgb(255 182 39/.65)}}
+.tile.turn .life{bottom:clamp(52px,16cqh,76px);font-size:min(42cqh,30cqw)}
+.tile.turn .cmdbtn,.tile.turn .opps{bottom:calc(clamp(52px,16cqh,76px) + 14px)}
+.tile.turn .out{display:none}
+@media (prefers-reduced-motion:reduce){.tile.turn::before,.endturn{animation:none}}
+.bar .tturn{background:var(--accent);color:#17151d}
+.bar .tturn b{color:#17151d}
+/* geschiedenis */
+.hhead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.hhead h2{margin:0}
+.hsub{display:block;margin-top:4px;color:var(--muted);font-size:15px}
+.hundo{min-height:44px;padding:0 16px;background:var(--panel2);display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px}
+.hundo svg{width:20px;height:20px}
+.hlist{display:grid;gap:6px;max-height:58dvh;overflow-y:auto;align-content:start}
+.hround{padding:8px 0 2px;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.hturn{background:var(--panel2);padding:10px 14px;display:grid;gap:6px}
+.hturn.now{box-shadow:inset 3px 0 0 var(--accent)}
+.hwho{display:flex;justify-content:space-between;gap:10px;font-size:14px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.hturn.now .hwho span{color:var(--fg)}
+.hwho em{font-style:normal;font-weight:400;letter-spacing:0;text-transform:none;font-size:15px}
+.hturn.now .hwho em{color:var(--accent)}
+.hrow{display:grid;grid-template-columns:14px minmax(0,1fr) 56px 96px;align-items:center;gap:10px;font-size:17px}
+.hrow small{color:var(--muted);font-size:14px}
+.hrow>small{text-align:right}
+.hrow b{font-family:var(--f-num);font-size:24px;text-align:right}
+.hrow b.neg{color:var(--danger)}.hrow b.pos{color:var(--ig)}
+.hdot{width:14px;height:14px;background:var(--c);outline:1px solid rgb(127 127 127/.4)}
 
 /* commandant-schade */
 .cmd{position:absolute;inset:0;background:var(--panel);color:var(--fg);display:flex;flex-direction:column;padding:10px 12px;gap:6px}
@@ -304,7 +338,7 @@ const I_MORE='<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><
 const ICON_MENU='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 
 /* ==== Status ==== */
-const fresh=(n,start,prev)=>({n,start,link:prev?prev.link:true,theme:prev?.theme||'auto',
+const fresh=(n,start,prev)=>({n,start,link:prev?prev.link:true,theme:prev?.theme||'auto',cmdRow:!!prev?.cmdRow,turnOn:!!prev?.turnOn,
   pc:prev?.pc?{...prev.pc,deck:[],pos:0,cost:0,last:null}:undefined,mana:[0,0,0,0,0,0],storm:0,players:[0,1,2,3,4,5].map(i=>{const q=prev?.players[i];return{name:q?q.name:`Player ${i+1}`,color:q?q.color:i,...(q?.art&&{art:q.art,artist:q.artist}),life:start,cmd:[0,0,0,0,0,0]}})});
 const load=()=>{try{const s=JSON.parse(localStorage.getItem(KEY));return s&&s.players&&s.players.length===6?s:null}catch(e){return null}};
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
@@ -356,13 +390,14 @@ function render(){
   for(let i=0;i<S.n;i++){
     const p=S.players[i],col=COLORS[p.color],[c,r]=L[1][i];
     const art=okArt(p.art);
-    h+=`<div class="tile${art?' has-art':''}" data-i="${i}" style="--c:${col.c};--t:${art?'#fff':col.t};grid-column:${c};grid-row:${r}"><div class="inner${turn(i)}">
+    h+=`<div class="tile${art?' has-art':''}${tOn()&&S.tt.active===i?' turn':''}" data-i="${i}" style="--c:${col.c};--t:${art?'#fff':col.t};grid-column:${c};grid-row:${r}"><div class="inner${turn(i)}">
       ${art?`<div class="art" style="background-image:url('${art}')"></div><div class="credit">${p.artist?'Illus. '+esc(p.artist):''}</div>`:''}
       <div class="zone" data-z="-1"></div><div class="zone" data-z="1"></div>
       <span class="sign m">−</span><span class="sign p">+</span>
       <div class="name" data-act="name"></div><div class="delta"></div><div class="life"></div><div class="out"></div><div class="start">Goes first</div>
       ${S.cmdRow?oppRow(i):`<button class="cmdbtn" data-act="cmd" aria-label="Commander damage">${ICON_CMD}<span></span></button>`}
       <div class="ctrs"></div><button class="more" data-act="more" aria-label="Player counters">${ico(I_MORE)}</button>
+      ${tOn()&&S.tt.active===i?`<button class="endturn" data-act="endturn">End turn${ico('<path d="M5 12h13M13 6l6 6-6 6"/>')}</button>`:''}
       <div class="cmd" hidden></div><div class="cmd cpanel" hidden></div></div></div>`;
   }
   if(pcOn()){h+=`<div class="tile plane" style="grid-column:-2/-1;grid-row:1/4"></div>`;if(!PL.cards&&!PL.state)loadPlanes()}
@@ -380,7 +415,8 @@ function oppRow(i){
 }
 function bar(){
   const tint=(d,c)=>ico(d).replace('<svg ',`<svg class="${c}" `);
-  board.querySelector('.bar').innerHTML=`<button data-act="n" aria-label="Number of players">${tint(I_PERSON,'ig')}<b>${S.n}</b></button>
+  board.querySelector('.bar').innerHTML=(S.turnOn?`<button data-act="hist" class="tturn" aria-label="Turn and match history">${ico('<path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 3.5V8h4.5"/><path d="M12 7.5V12l3 2"/>')}<b>${tOn()?'T'+S.tt.round:'–'}</b></button>`:'')+
+    `<button data-act="n" aria-label="Number of players">${tint(I_PERSON,'ig')}<b>${S.n}</b></button>
     <button data-act="start" aria-label="Starting life">${tint(I_HEART,'ir')}<b>${S.start}</b></button>
     <button data-act="first" class="ic" aria-label="Who goes first">${tint(I_CROWN,'iy')}</button>
     <button data-act="dice" class="ic" aria-label="Dice">${ico(I_DIE)}</button>
@@ -413,8 +449,47 @@ function cmdHtml(i){
 
 /* ==== Acties ==== */
 function bump(i,d){pend[i]+=d;clearTimeout(pendT[i]);pendT[i]=setTimeout(()=>{pend[i]=0;update(i)},1600)}
-function life(i,d){S.players[i].life+=d;bump(i,d);update(i);save()}
-function cmd(i,f,d){const p=S.players[i],nv=Math.max(0,p.cmd[f]+d),real=nv-p.cmd[f];if(!real)return;p.cmd[f]=nv;if(S.link){p.life-=real;bump(i,-real)}update(i);save()}
+function life(i,d){logLife(i,d);S.players[i].life+=d;bump(i,d);update(i);save()}
+function cmd(i,f,d){const p=S.players[i],nv=Math.max(0,p.cmd[f]+d),real=nv-p.cmd[f];if(!real)return;p.cmd[f]=nv;if(S.link){logLife(i,-real,f);p.life-=real;bump(i,-real)}update(i);save()}
+
+/* ==== Beurtvolgorde ==== */
+/* S.tt = {start, active, round, log:[{r,p,ev:[{t,from,to,src:[]}]}]}; bestaat zolang de partij loopt (nieuw spel wist hem) */
+const SEATS={2:[0,1],3:[0,1,2],4:[0,1,3,2],5:[0,1,2,3,4],6:[0,1,2,5,4,3]};
+const seats=()=>pcOn()?[...Array(S.n).keys()]:SEATS[S.n];
+const tOn=()=>S.turnOn&&S.tt&&S.tt.active<S.n;
+function startTurns(w){S.tt={start:w,active:w,round:1,log:[{r:1,p:w,ev:[]}]};save();render()}
+function logLife(i,d,src){
+  if(!tOn()||!d)return;const cur=S.tt.log[S.tt.log.length-1];let e=cur.ev.find(x=>x.t===i);
+  if(!e){e={t:i,from:S.players[i].life,to:S.players[i].life,src:[]};cur.ev.push(e)}
+  e.to+=d;if(src!=null&&!e.src.includes(src))e.src.push(src);
+  if(e.to===e.from&&!e.src.length)cur.ev.splice(cur.ev.indexOf(e),1);
+}
+function endTurn(){
+  if(!tOn())return;const st=seats(),tt=S.tt,pos=x=>(st.indexOf(x)-st.indexOf(tt.start)+st.length)%st.length;
+  let k=st.indexOf(tt.active),nx=tt.active;
+  for(let n=0;n<st.length;n++){k=(k+1)%st.length;nx=st[k];if(!isDead(S.players[nx]))break}
+  if(pos(nx)<=pos(tt.active))tt.round++;
+  tt.active=nx;tt.log.push({r:tt.round,p:nx,ev:[]});save();render();
+}
+function undoTurn(){
+  const tt=S.tt;if(!tt||tt.log.length<2)return;const last=tt.log.pop(),prev=tt.log[tt.log.length-1];
+  for(const e of last.ev){const o=prev.ev.find(x=>x.t===e.t);if(o){o.to=e.to;o.src=[...new Set([...o.src,...e.src])]}else prev.ev.push(e)}
+  tt.active=prev.p;tt.round=prev.r;save();render();showHistory();
+}
+function showHistory(){
+  const tt=S.tt,nm=i=>esc(S.players[i].name),dot=i=>`<i class="hdot" style="--c:${COLORS[S.players[i].color].c}"></i>`;
+  let h='',r=0;
+  if(tt)tt.log.forEach((g,k)=>{
+    if(g.r!==r){r=g.r;h+=`<div class="hround">Turn ${r}</div>`}
+    const now=k===tt.log.length-1;
+    h+=`<div class="hturn${now?' now':''}"><div class="hwho"><span>${nm(g.p)}'s turn</span>${now?'<em>In progress</em>':g.ev.length?'':'<em>No life changes</em>'}</div>
+      ${g.ev.map(e=>{const d=e.to-e.from;return `<div class="hrow">${dot(e.t)}<span>${nm(e.t)}${e.src.length?` <small>· commander damage from ${e.src.map(nm).join(', ')}</small>`:''}</span><b class="${d<0?'neg':'pos'}">${d>0?'+':d<0?'−':''}${Math.abs(d)}</b><small>${e.from} → ${e.to}</small></div>`}).join('')}</div>`});
+  sheet.innerHTML=`<div class="box wide" role="dialog" aria-label="Match history"><div class="hhead"><div><h2>Match history</h2>
+      <span class="hsub">${tt?`Turn ${tt.round} · ${nm(tt.active)}'s turn`:'Tap the crown to choose who goes first.'}</span></div>
+      ${tt&&tt.log.length>1?`<button class="hundo" data-undo>${ico('<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>')}Undo end turn</button>`:''}</div>
+    <div class="hlist">${h}</div><div class="acts"><button class="new" data-close>Done</button></div></div>`;
+  sheet.hidden=false;const l=sheet.querySelector('.hlist');l.scrollTop=l.scrollHeight;
+}
 
 const holds=new Map();
 board.addEventListener('pointerdown',e=>{
@@ -447,9 +522,11 @@ board.addEventListener('click',e=>{
   else if(a==='zoom')showZoom(b.getAttribute('src'));
   else if(a==='pcload'){PL.state='';loadPlanes()}
   else if(a==='first')pickFirst();
+  else if(a==='endturn')endTurn();
+  else if(a==='hist')showHistory();
   else if(a==='new'){clearTimeout(sureT);
     if(!sure){sure=true;bar();sureT=setTimeout(()=>{sure=false;bar()},3000)}
-    else{sure=false;S=fresh(S.n,S.start,S);open.clear();pend.fill(0);save();render()}}
+    else{sure=false;S=fresh(S.n,S.start,S);open.clear();openCtr.clear();pend.fill(0);save();render()}}
 });
 
 /* ==== Naam wijzigen in het vak ==== */
@@ -521,7 +598,7 @@ pop.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return
     save();render();pop.innerHTML=pcHtml();return}
   if(!b.dataset.v)return;
   const v=+b.dataset.v;pop.hidden=true;
-  if(popKind==='n'){S.n=v;open.clear();save();render()}else setStart(v)});
+  if(popKind==='n'){S.n=v;open.clear();openCtr.clear();delete S.tt;save();render()}else setStart(v)});
 pop.addEventListener('submit',e=>{e.preventDefault();const v=Math.round(+$('#lifeIn').value);if(v>0&&v<=9999){pop.hidden=true;setStart(v)}});
 function setStart(v){const u=untouched();S.start=v;if(u)S.players.forEach(p=>p.life=v);save();render()}
 document.addEventListener('pointerdown',e=>{if(pop.hidden||pop.contains(e.target)||e.target.closest('[data-act="n"],[data-act="start"],[data-act="dice"],[data-act="mana"],[data-act="pc"]'))return;
@@ -533,6 +610,7 @@ function pickFirst(){
   clearTimeout(spin);const w=Math.floor(Math.random()*S.n),steps=matchMedia('(prefers-reduced-motion: reduce)').matches?0:S.n*2+w;
   const mark=(i,f)=>board.querySelectorAll('.tile').forEach(t=>{t.classList.toggle('pick',+t.dataset.i===i);t.classList.toggle('first',f&&+t.dataset.i===i)});
   (function step(k){mark(k%S.n,k>=steps);
+    if(k>=steps&&S.turnOn){startTurns(w);mark(w,true)}
     spin=k<steps?setTimeout(()=>step(k+1),60+k*k*1.2):setTimeout(()=>mark(-1,false),5000)})(steps?0:w);
 }
 
@@ -550,6 +628,7 @@ function showMenu(){
     <div class="grp"><span class="lbl">Theme</span><div class="seg">${[['auto','Auto'],['light','Light'],['dark','Dark']].map(([k,t])=>`<button data-theme-set="${k}" class="${S.theme===k?'on':''}">${t}</button>`).join('')}</div></div>
     <button class="tog" data-link><span>Commander damage reduces life</span><i class="sw ${S.link?'on':''}"></i></button>
     <button class="tog" data-cmdrow><span>Show opponents for commander damage</span><i class="sw ${S.cmdRow?'on':''}"></i></button>
+    <button class="tog" data-turnon><span>Track turn order and history</span><i class="sw ${S.turnOn?'on':''}"></i></button>
     <div class="acts"><button class="new" data-close>Done</button></div></div>`;
   sheet.hidden=false;
 }
@@ -558,6 +637,8 @@ sheet.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;const ds=b.dataset;
   if('link' in ds){S.link=!S.link;save();showMenu()}
   else if('cmdrow' in ds){S.cmdRow=!S.cmdRow;open.clear();save();render();showMenu()}
+  else if('turnon' in ds){S.turnOn=!S.turnOn;save();render();showMenu()}
+  else if('undo' in ds)undoTurn();
   else if(ds.themeSet){S.theme=ds.themeSet;save();applyTheme();showMenu()}
   else if(ds.pall){const on=ds.pall==='1',ids=new Set(planeFilter().map(c=>c.id));S.pc.off=on?S.pc.off.filter(x=>!ids.has(x)):[...new Set([...S.pc.off,...ids])];save();listPlanes()}
   else if('pdone' in ds){sheet.hidden=true;render()}
