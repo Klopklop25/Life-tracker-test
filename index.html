@@ -199,7 +199,8 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .seg{display:flex;gap:6px;flex-wrap:wrap}
 .seg button{min-width:56px;min-height:48px;background:var(--panel2);font-family:var(--f-num);font-weight:700;font-size:24px;padding-inline:14px}
 .seg button.on{background:var(--accent);color:var(--bg)}
-.tog{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;font-size:17px}
+.tog{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;font-size:17px;text-align:left}
+.tog small{display:block;font-size:13px;color:var(--muted)}
 .sw{flex:none;width:58px;height:34px;background:var(--line);position:relative;transition:background .2s}
 .sw::after{content:"";position:absolute;top:4px;left:4px;width:26px;height:26px;background:var(--fg);transition:transform .2s}
 .sw.on{background:var(--accent)}.sw.on::after{transform:translateX(24px);background:var(--bg)}
@@ -244,6 +245,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .bar.vert .ic{height:var(--bs)}
 .bar.vert svg{transform:rotate(90deg);width:calc(var(--bs)*.46);height:calc(var(--bs)*.46)}
 .bar.vert button b{font-size:calc(var(--bs)*.46)}
+/* one-sided view: verticale balk rechtop, van boven naar beneden */
+.bar.vert.up{flex-direction:column}
+.bar.vert.up button{writing-mode:horizontal-tb;transform:none;flex-direction:column;padding:calc(var(--bs)*.14) 0}
+.bar.vert.up svg{transform:none}
 .bar button.on{color:var(--accent)}
 .bar svg.ig{color:var(--ig)}.bar svg.ir{color:var(--ir)}.bar svg.iy{color:var(--iy)}
 .name{pointer-events:auto;cursor:text;margin-inline:auto;width:fit-content;max-width:100%;padding-block:4px}
@@ -354,7 +359,7 @@ const I_MORE='<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><
 const ICON_MENU='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>';
 
 /* ==== Status ==== */
-const fresh=(n,start,prev)=>({n,start,link:prev?prev.link:true,theme:prev?.theme||'auto',cmdRow:!!prev?.cmdRow,turnOn:!!prev?.turnOn,
+const fresh=(n,start,prev)=>({n,start,link:prev?prev.link:true,theme:prev?.theme||'auto',cmdRow:!!prev?.cmdRow,turnOn:!!prev?.turnOn,oneSide:!!prev?.oneSide,
   pc:prev?.pc?{...prev.pc,deck:[],pos:0,cost:0,last:null}:undefined,mana:[0,0,0,0,0,0],storm:0,players:[0,1,2,3,4,5].map(i=>{const q=prev?.players[i];return{name:q?q.name:`Player ${i+1}`,color:q?q.color:i,...(q?.art&&{art:q.art,artist:q.artist}),life:start,cmd:[0,0,0,0,0,0]}})});
 const load=()=>{try{const s=JSON.parse(localStorage.getItem(KEY));return s&&s.players&&s.players.length===6?s:null}catch(e){return null}};
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
@@ -381,7 +386,7 @@ const LAYOUT_PC={2:[`1fr auto ${PCW}`,[[1,1],[1,3]]],3:[`1fr 1fr auto ${PCW}`,[[
 const pcOn=()=>S.pc.on&&S.n<=4;
 const lay=()=>(pcOn()?LAYOUT_PC:LAYOUT)[S.n];
 const vert=()=>lay()[0].includes('auto');
-const turn=i=>{const r=lay()[1][i][1];return r==='1/4'?' side':r===1?' rot':''};
+const turn=i=>{if(S.oneSide)return '';const r=lay()[1][i][1];return r==='1/4'?' side':r===1?' rot':''};
 const untouched=()=>S.players.slice(0,S.n).every(p=>p.life===S.start&&p.cmd.every(v=>!v));
 /* alleen afbeeldingen van Scryfall (opgeslagen waarde komt uit localStorage) */
 const okArt=u=>typeof u==='string'&&/^https:\/\/cards\.scryfall\.io\/[\w\-./]+(\?\d+)?$/.test(u)?u:'';
@@ -417,7 +422,7 @@ function render(){
       <div class="cmd" hidden></div><div class="cmd cpanel" hidden></div></div></div>`;
   }
   if(pcOn()){h+=`<div class="tile plane" style="grid-column:-2/-1;grid-row:1/4"></div>`;if(!PL.cards&&!PL.state)loadPlanes()}
-  board.innerHTML=h+`<div class="bar${vert()?' vert':''}"></div>`;
+  board.innerHTML=h+`<div class="bar${vert()?' vert':''}${S.oneSide?' up':''}"></div>`;
   for(let i=0;i<S.n;i++)update(i);
   bar();renderPlane();lastRow=rowOk();
 }
@@ -650,6 +655,7 @@ function showMenu(){
     <button class="tog" data-link><span>Commander damage reduces life</span><i class="sw ${S.link?'on':''}"></i></button>
     <button class="tog" data-cmdrow><span>Show opponents for commander damage</span><i class="sw ${S.cmdRow?'on':''}"></i></button>
     <button class="tog" data-turnon><span>Track turn order and history</span><i class="sw ${S.turnOn?'on':''}"></i></button>
+    <button class="tog" data-oneside><span>One-sided view <small>all players face this side</small></span><i class="sw ${S.oneSide?'on':''}"></i></button>
     <div class="acts"><button class="new" data-close>Done</button></div></div>`;
   sheet.hidden=false;
 }
@@ -659,6 +665,7 @@ sheet.addEventListener('click',e=>{
   if('link' in ds){S.link=!S.link;save();showMenu()}
   else if('cmdrow' in ds){S.cmdRow=!S.cmdRow;open.clear();save();render();showMenu()}
   else if('turnon' in ds){S.turnOn=!S.turnOn;save();render();showMenu()}
+  else if('oneside' in ds){S.oneSide=!S.oneSide;save();render();showMenu()}
   else if('undo' in ds)undoTurn();
   else if(ds.themeSet){S.theme=ds.themeSet;save();applyTheme();showMenu()}
   else if(ds.pall){const on=ds.pall==='1',ids=new Set(planeFilter().map(c=>c.id));S.pc.off=on?S.pc.off.filter(x=>!ids.has(x)):[...new Set([...S.pc.off,...ids])];save();listPlanes()}
