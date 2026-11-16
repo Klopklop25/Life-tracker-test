@@ -42,7 +42,17 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 /* staand scherm (telefoon): het hele speelveld een kwartslag draaien, zodat de liggende indeling blijft */
 @media (orientation:portrait){#board{--bh:calc(100dvw - 24px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px));
   position:fixed;left:50%;top:50%;width:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));height:var(--bh);transform:translate(-50%,-50%) rotate(90deg)}
+  #board.two{--bh:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));position:relative;left:auto;top:auto;width:auto;height:100%;transform:none}
 }
+/* 2 spelers: staande indeling (twee bijna vierkante vakken boven elkaar); op een liggend scherm draait het speelveld daarvoor een kwartslag.
+   De balk is dan zo breed als de korte schermzijde: kleinere knoppen en zo nodig twee regels */
+#board.two .bar{flex-wrap:wrap;gap:4px;padding-block:2px}
+#board.two .bar button{min-height:40px;padding:0 8px;gap:5px}
+#board.two .bar .ic{width:40px;padding:0}
+#board.two .bar svg{width:20px;height:20px}
+#board.two .bar button b{font-size:20px}
+@media (orientation:landscape){#board.two{--bh:calc(100dvw - 32px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px));
+  position:fixed;left:50%;top:50%;width:calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));height:var(--bh);transform:translate(-50%,-50%) rotate(90deg)}}
 /* one-sided view omgedraaid: vakken blijven op hun plek, alleen de inhoud en de menubalk kijken naar de andere kant */
 .bar.flip{transform:rotate(180deg)}
 .bar{grid-column:1/-1;grid-row:2;position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:8px;min-width:0;pointer-events:none}
@@ -409,7 +419,7 @@ function cpanelHtml(p){
 
 /* ==== Weergave ==== */
 function render(){
-  const L=lay();board.style.gridTemplateColumns=L[0];
+  const L=lay();board.style.gridTemplateColumns=L[0];board.classList.toggle('two',S.n===2&&!pcOn());
   let h='';
   for(let i=0;i<S.n;i++){
     const p=S.players[i],col=COLORS[p.color],[c,r]=L[1][i];
