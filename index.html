@@ -214,6 +214,17 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 .seg button.on{background:var(--accent);color:var(--bg)}
 .tog{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;font-size:17px;text-align:left}
 .tog small{display:block;font-size:13px;color:var(--muted)}
+.tog>svg{flex:none;width:26px;height:26px;color:var(--muted)}
+/* apparaten koppelen */
+.lmsg{margin:0;color:var(--muted);font-size:16px;line-height:1.45;max-width:60ch}
+.qr{align-self:center;justify-self:center;width:min(320px,70vw,52dvh);aspect-ratio:1;background:#fff;padding:6px}
+.qr svg{display:block;width:100%;height:100%}
+.lalt summary{cursor:pointer;color:var(--muted);font-size:15px;min-height:32px}
+.lalt textarea,.lpaste textarea{width:100%;box-sizing:border-box;margin:8px 0;background:var(--panel2);color:var(--fg);border:1px solid var(--line);font:13px/1.4 ui-monospace,Consolas,monospace;padding:8px;word-break:break-all;resize:vertical}
+.lalt button,.lpaste button{min-height:44px;padding:0 16px;background:var(--panel2);font-weight:600}
+.lvid{width:100%;max-height:44dvh;background:#000;object-fit:cover}
+.bar button.linked{color:var(--ig)}
+#toast{position:fixed;z-index:40;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:calc(100vw - 32px);padding:12px 18px;background:var(--fg);color:var(--bg);font-weight:600;font-size:16px;box-shadow:0 8px 24px rgb(0 0 0/.4);pointer-events:none}
 .sw{flex:none;width:58px;height:34px;background:var(--line);position:relative;transition:background .2s}
 .sw::after{content:"";position:absolute;top:4px;left:4px;width:26px;height:26px;background:var(--fg);transition:transform .2s}
 .sw.on{background:var(--accent)}.sw.on::after{transform:translateX(24px);background:var(--bg)}
@@ -328,7 +339,10 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 <div id="zoom" hidden></div>
 <div id="proll" hidden></div>
 <div id="sheet" hidden></div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
 
+<!-- qrcode-generator 1.4.4 (MIT, Kazuhiko Arase), via npm met integriteitscontrole; lokaal zodat er niets van buiten geladen wordt -->
+<script src="qrcode.js"></script>
 <script>
 const COLORS=[{n:'White',c:'#f4e7b8',t:'#1f1b10'},{n:'Blue',c:'#1f78e0',t:'#f2f8ff'},{n:'Black',c:'#4b2f73',t:'#f5efff'},{n:'Red',c:'#e5381f',t:'#fff4ef'},{n:'Green',c:'#1d9b4b',t:'#f0fff4'},{n:'Gold',c:'#f0a50e',t:'#231600'}];
 const KEY='mtg-leventeller-v1',LETHAL=21;
@@ -375,7 +389,7 @@ const ICON_MENU='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 
 const fresh=(n,start,prev)=>({n,start,link:prev?prev.link:true,theme:prev?.theme||'auto',cmdRow:!!prev?.cmdRow,turnOn:!!prev?.turnOn,oneSide:!!prev?.oneSide,
   pc:prev?.pc?{...prev.pc,deck:[],pos:0,cost:0,last:null}:undefined,mana:[0,0,0,0,0,0],storm:0,players:[0,1,2,3,4,5].map(i=>{const q=prev?.players[i];return{name:q?q.name:`Player ${i+1}`,color:q?q.color:i,...(q?.art&&{art:q.art,artist:q.artist}),life:start,cmd:[0,0,0,0,0,0]}})});
 const load=()=>{try{const s=JSON.parse(localStorage.getItem(KEY));return s&&s.players&&s.players.length===6?s:null}catch(e){return null}};
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}linkSync()};
 let S=load()||fresh(4,40);
 S.mana??=[0,0,0,0,0,0];S.storm??=0;S.players.forEach(p=>p.name=p.name.replace(/^Speler (\d)$/,'Player $1'));
 S.theme??='auto';S.pc??={on:false,off:[],deck:[],pos:0,cost:0,last:null};
@@ -462,6 +476,7 @@ function bar(){
     <button data-act="pc" class="ic${S.pc.on?' on':''}" aria-label="Planechase">${I_PC}</button>
     <button data-act="new" class="${sure?'sure':'ic'}" aria-label="Restart">${ico(I_RESET)}${sure?'<b>?</b>':''}</button>
     ${S.oneSide?`<button data-act="flip" class="ic" aria-label="Rotate view 180 degrees">${ico(I_TURN)}</button>`:''}
+    ${G.role?`<button data-act="link" class="ic linked" aria-label="Linked device">${ico(I_LINK)}</button>`:''}
     <button data-act="menu" class="ic" aria-label="Names and settings">${ICON_MENU}</button>`;
 }
 function update(i){
@@ -488,8 +503,15 @@ function cmdHtml(i){
 
 /* ==== Acties ==== */
 function bump(i,d){pend[i]+=d;clearTimeout(pendT[i]);pendT[i]=setTimeout(()=>{pend[i]=0;update(i)},1600)}
-function life(i,d){logLife(i,d);S.players[i].life+=d;bump(i,d);update(i);save()}
-function cmd(i,f,d){const p=S.players[i],nv=Math.max(0,p.cmd[f]+d),real=nv-p.cmd[f];if(!real)return;p.cmd[f]=nv;if(S.link){logLife(i,-real,f);p.life-=real;bump(i,-real)}update(i);save()}
+/* gekoppeld als gast: de actie direct lokaal tonen én naar de host sturen; de host stuurt daarna de echte stand terug */
+function life(i,d){toHost({a:'life',i,d});logLife(i,d);S.players[i].life+=d;bump(i,d);update(i);save()}
+function cmd(i,f,d){toHost({a:'cmd',i,f,d});const p=S.players[i],nv=Math.max(0,p.cmd[f]+d),real=nv-p.cmd[f];if(!real)return;p.cmd[f]=nv;if(S.link){logLife(i,-real,f);p.life-=real;bump(i,-real)}update(i);save()}
+function ctrChange(i,k,d){toHost({a:'cn',i,k,d});const t=COUNTERS.find(x=>x.k===k),p=S.players[i];if(!t||!p.cn||!(k in p.cn))return;p.cn[k]=Math.max(0,p.cn[k]+d*(t.step||1));save();update(i)}
+function ctrToggle(i,k){toHost({a:'cntog',i,k});const t=COUNTERS.find(x=>x.k===k),p=S.players[i];if(!t)return;p.cn??={};
+  if(k in p.cn)delete p.cn[k];else{p.cn[k]=t.flag?1:0;if(t.one)S.players.forEach((q,j)=>{if(j!==i&&q.cn&&k in q.cn){delete q.cn[k];update(j)}})}
+  save();update(i)}
+function manaChange(m,d,clr){toHost({a:'mana',m,d,clr});if(clr==='mana')S.mana.fill(0);else if(clr==='storm')S.storm=0;else if(m==='s')S.storm=Math.max(0,S.storm+d);else if(S.mana[m]!=null)S.mana[m]=Math.max(0,S.mana[m]+d);
+  save();if(!pop.hidden&&popKind==='mana')pop.innerHTML=manaHtml()}
 
 /* ==== Beurtvolgorde ==== */
 /* S.tt = {start, active, round, log:[{r,p,ev:[{t,from,to,src:[]}]}]}; bestaat zolang de partij loopt (nieuw spel wist hem) */
@@ -504,16 +526,16 @@ function logLife(i,d,src){
   if(e.to===e.from&&!e.src.length)cur.ev.splice(cur.ev.indexOf(e),1);
 }
 function endTurn(){
-  if(!tOn())return;const st=seats(),tt=S.tt,pos=x=>(st.indexOf(x)-st.indexOf(tt.start)+st.length)%st.length;
+  toHost({a:'end'});if(!tOn())return;const st=seats(),tt=S.tt,pos=x=>(st.indexOf(x)-st.indexOf(tt.start)+st.length)%st.length;
   let k=st.indexOf(tt.active),nx=tt.active;
   for(let n=0;n<st.length;n++){k=(k+1)%st.length;nx=st[k];if(!isDead(S.players[nx]))break}
   if(pos(nx)<=pos(tt.active))tt.round++;
   tt.active=nx;tt.log.push({r:tt.round,p:nx,ev:[]});save();render();
 }
-function undoTurn(){
-  const tt=S.tt;if(!tt||tt.log.length<2)return;const last=tt.log.pop(),prev=tt.log[tt.log.length-1];
+function undoTurn(quiet){
+  toHost({a:'undo'});const tt=S.tt;if(!tt||tt.log.length<2)return;const last=tt.log.pop(),prev=tt.log[tt.log.length-1];
   for(const e of last.ev){const o=prev.ev.find(x=>x.t===e.t);if(o){o.to=e.to;o.src=[...new Set([...o.src,...e.src])]}else prev.ev.push(e)}
-  tt.active=prev.p;tt.round=prev.r;save();render();showHistory();
+  tt.active=prev.p;tt.round=prev.r;save();render();if(!quiet)showHistory();
 }
 function showHistory(){
   const tt=S.tt,nm=i=>esc(S.players[i].name),dot=i=>`<i class="hdot" style="--c:${COLORS[S.players[i].color].c}"></i>`;
@@ -544,14 +566,14 @@ board.addEventListener('contextmenu',e=>e.preventDefault());
 board.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const t=b.closest('.tile'),i=t?+t.dataset.i:-1,a=b.dataset.act;
+  if(G.role==='guest'&&HOSTONLY.has(a))return toast('Only the host device can change this.');
   if(a==='cmd'){open.add(i);update(i)}
   else if(a==='cmdx'){open.delete(i);update(i)}
   else if(a==='more'){openCtr.add(i);update(i)}
   else if(a==='cnx'){openCtr.delete(i);update(i)}
-  else if(a==='cntog'){const k=b.dataset.k,t=COUNTERS.find(x=>x.k===k),p=S.players[i];p.cn??={};
-    if(k in p.cn)delete p.cn[k];else{p.cn[k]=t.flag?1:0;if(t.one)S.players.forEach((q,j)=>{if(j!==i&&q.cn&&k in q.cn){delete q.cn[k];update(j)}})}
-    save();update(i)}
-  else if(a==='cn'){const k=b.dataset.k,t=COUNTERS.find(x=>x.k===k),p=S.players[i];p.cn[k]=Math.max(0,p.cn[k]+(+b.dataset.d)*(t.step||1));save();update(i)}
+  else if(a==='cntog')ctrToggle(i,b.dataset.k);
+  else if(a==='cn')ctrChange(i,b.dataset.k,+b.dataset.d);
+  else if(a==='link')showLink();
   else if(a==='cd')cmd(i,+b.dataset.f,+b.dataset.d);
   else if(a==='menu')showMenu();
   else if(a==='name')editName(i,b);
@@ -627,8 +649,7 @@ pop.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return
   if(b.dataset.die){const d=b.dataset.die;roll(d==='munt'?d:+d);return}
   if('turn' in b.dataset){manaRot=!manaRot;pop.classList.toggle('r180',manaRot);return}
   const{m,d,clr}=b.dataset;
-  if(m||clr){if(clr==='mana')S.mana.fill(0);else if(clr)S.storm=0;else if(m==='s')S.storm=Math.max(0,S.storm+ +d);else S.mana[+m]=Math.max(0,S.mana[+m]+ +d);
-    save();pop.innerHTML=manaHtml();return}
+  if(m||clr){manaChange(m==='s'?'s':+m,+d,clr);return}
   const pc=b.dataset.pc;
   if(pc){
     if(pc==='on'){S.pc.on=!S.pc.on;if(S.pc.on&&S.n>4)S.n=4;open.clear()}
@@ -663,13 +684,15 @@ function showMenu(){
       <button class="pbtn" data-psave="${i}" aria-label="Save profile of player ${i+1}">${ico(I_SAVE)}</button><button class="pbtn" data-pload="${i}" aria-label="Load a profile for player ${i+1}">${ico(I_LOAD)}</button></div>
       <div class="cols">${COLORS.map((c,k)=>`<button data-col="${i}:${k}" class="${p.color===k?'on':''}" style="--c:${c.c}" aria-label="${c.n}"></button>`).join('')}</div>
       <button class="artbtn" data-art="${i}" aria-label="Choose art for player ${i+1}"${okArt(p.art)?` style="background-image:url('${okArt(p.art)}')"`:''}>${okArt(p.art)?'':ico(I_IMG)}</button></div>`;}
+  const guest=G.role==='guest';
   sheet.innerHTML=`<div class="box" role="dialog" aria-label="Settings"><h2>Settings</h2>
     ${fs?`<button class="tog" data-fs><span>Fullscreen</span><i class="sw ${document.fullscreenElement?'on':''}"></i></button>`:''}
-    <div class="grp"><span class="lbl">Names and colors</span>${pl}</div>
+    <button class="tog" data-llink><span>Link devices <small>${G.role==='host'?'linked · this device is the host':guest?'linked to a host device':'use a phone and a tablet as one tracker'}</small></span>${ico(I_LINK)}</button>
+    ${guest?'<p class="lmsg">Names, colors, art and game rules are set on the host device.</p>':`<div class="grp"><span class="lbl">Names and colors</span>${pl}</div>`}
     <div class="grp"><span class="lbl">Theme</span><div class="seg">${[['auto','Auto'],['light','Light'],['dark','Dark']].map(([k,t])=>`<button data-theme-set="${k}" class="${S.theme===k?'on':''}">${t}</button>`).join('')}</div></div>
-    <button class="tog" data-link><span>Commander damage reduces life</span><i class="sw ${S.link?'on':''}"></i></button>
+    ${guest?'':`<button class="tog" data-link><span>Commander damage reduces life</span><i class="sw ${S.link?'on':''}"></i></button>`}
     <button class="tog" data-cmdrow><span>Show opponents for commander damage</span><i class="sw ${S.cmdRow?'on':''}"></i></button>
-    <button class="tog" data-turnon><span>Track turn order and history</span><i class="sw ${S.turnOn?'on':''}"></i></button>
+    ${guest?'':`<button class="tog" data-turnon><span>Track turn order and history</span><i class="sw ${S.turnOn?'on':''}"></i></button>`}
     <button class="tog" data-oneside><span>One-sided view <small>all players face this side</small></span><i class="sw ${S.oneSide?'on':''}"></i></button>
     <div class="acts"><button class="new" data-close>Done</button></div></div>`;
   sheet.hidden=false;
@@ -839,6 +862,167 @@ function planeCount(){const e=$('#pcount');if(e&&PL.cards)e.textContent=`${PL.ca
 const I_TURN='<path d="M4.5 12a7.5 7.5 0 0 1 13.2-4.9M19.5 12a7.5 7.5 0 0 1-13.2 4.9"/><path d="M18 3v4.5h-4.5M6 21v-4.5h4.5"/>';
 function showZoom(src){const z=$('#zoom');z.innerHTML=`<img src="${src}" alt=""><button class="zturn" aria-label="Rotate 180 degrees">${ico(I_TURN)}</button>`;z.hidden=false}
 $('#zoom').addEventListener('click',e=>{const z=$('#zoom');if(e.target.closest('.zturn'))z.classList.toggle('flip');else z.hidden=true});
+
+/* ==== Apparaten koppelen (WebRTC, alleen lokaal netwerk, uitwisseling via QR-codes) ====
+   Geen server: de host toont een QR met zijn verbindingsgegevens, de gast scant en toont een QR terug, de host scant die.
+   iceServers leeg = alleen lokale routes, dus alleen op hetzelfde (niet-gast) wifi. Het datakanaal is versleuteld (DTLS).
+   Host is de baas: gasten sturen alleen acties uit een vaste lijst; de host controleert ze en stuurt de stand terug. */
+const I_LINK='<path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1.2 1.2"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1.2-1.2"/>';
+var G={role:null,pc:null,ch:null,st:null,tok:20,tt:0,timer:null,scan:null};
+const HOSTONLY=new Set(['n','start','first','new','pc','pdie','pcost','name']);
+const GBK='lt-guest-backup';
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2600)}
+function toHost(m){if(G.role==='guest'&&G.ch?.readyState==='open')G.ch.send(JSON.stringify(m))}
+const gameState=()=>({n:S.n,start:S.start,link:S.link,turnOn:S.turnOn,mana:S.mana,storm:S.storm,players:S.players,pc:S.pc,tt:S.tt});
+function linkSync(){if(G.role!=='host'||G.ch?.readyState!=='open')return;clearTimeout(G.st);G.st=setTimeout(()=>{try{G.ch.send(JSON.stringify({t:'s',s:gameState()}))}catch(e){}},40)}
+
+/* verbindingsgegevens compact maken voor een kleine QR: alleen wat WebRTC nodig heeft */
+const ICE=/^[A-Za-z0-9+/]{4,256}$/,ADDR=/^[0-9A-Za-z.:-]{3,64}$/;
+function pack(sdp,t){
+  const g=r=>(sdp.match(r)||[])[1]||'',c=[];
+  for(const l of sdp.split(/\r?\n/))if(l.startsWith('a=candidate:')){const f=l.slice(12).split(' ');if(f[2]?.toLowerCase()==='udp'&&f[7]==='host'&&c.length<8)c.push(f[4]+'/'+f[5])}
+  return ['LT1',t,g(/a=ice-ufrag:(\S+)/),g(/a=ice-pwd:(\S+)/),g(/a=fingerprint:sha-256 (\S+)/).replace(/:/g,''),c.join(',')].join('|');
+}
+function unpack(s,t){
+  const p=String(s).trim().split('|');if(p.length!==6||p[0]!=='LT1'||p[1]!==t)return null;
+  const[, ,u,w,f,cs]=p,c=cs?cs.split(',').map(x=>x.split('/')):[];
+  if(!ICE.test(u)||!ICE.test(w)||!/^[0-9A-Fa-f]{64}$/.test(f)||!c.length||c.length>8)return null;
+  for(const[a,port]of c)if(!ADDR.test(a||'')||!(+port>0&&+port<65536))return null;
+  return{u,w,f:f.toUpperCase().match(/../g).join(':'),c};
+}
+function sdpOf(d,setup){
+  return ['v=0','o=- 1 2 IN IP4 127.0.0.1','s=-','t=0 0','a=group:BUNDLE 0','a=msid-semantic: WMS','m=application 9 UDP/DTLS/SCTP webrtc-datachannel','c=IN IP4 0.0.0.0',
+    'a=ice-ufrag:'+d.u,'a=ice-pwd:'+d.w,'a=fingerprint:sha-256 '+d.f,'a=setup:'+setup,'a=mid:0','a=sctp-port:5000','a=max-message-size:262144',
+    ...d.c.map(([a,p],k)=>`a=candidate:${k+1} 1 udp ${2122260223-k} ${a} ${+p} typ host generation 0`),''].join('\r\n');
+}
+const iceDone=pc=>new Promise(r=>{if(pc.iceGatheringState==='complete')return r();const t=setTimeout(r,3000);pc.addEventListener('icegatheringstatechange',()=>{if(pc.iceGatheringState==='complete'){clearTimeout(t);r()}})});
+function newPc(){const pc=new RTCPeerConnection({iceServers:[]});pc.onconnectionstatechange=()=>{if(['failed','closed'].includes(pc.connectionState)&&G.pc===pc)linkReset(G.role?'Connection lost.':'Could not connect. Make sure both devices are on the same Wi-Fi (not a guest network) and try again.')};G.pc=pc;return pc}
+
+function linkReset(msg){
+  stopScan();clearTimeout(G.timer);const wasGuest=G.role==='guest',pc=G.pc;G.role=null;G.ch=null;G.pc=null;
+  try{pc?.close()}catch(e){}
+  if(wasGuest){try{const b=JSON.parse(localStorage.getItem(GBK));if(b?.players?.length===6){S=b;save()}}catch(e){}try{localStorage.removeItem(GBK)}catch(e){}}
+  render();if(msg)toast(msg);if(!sheet.hidden&&sheet.querySelector('.lbox'))showLink();
+}
+function setupCh(ch,role){
+  ch.onopen=()=>{clearTimeout(G.timer);G.ch=ch;G.role=role;
+    if(role==='guest'){try{localStorage.setItem(GBK,JSON.stringify(S))}catch(e){}}else linkSync();
+    stopScan();sheet.hidden=true;render();toast(role==='host'?'Device linked.':'Linked to the host device.')};
+  ch.onmessage=e=>{if(typeof e.data!=='string')return;role==='host'?fromGuest(e.data):fromHost(e.data)};
+  ch.onclose=()=>{if(G.ch===ch)linkReset('Connection lost.')};
+}
+async function hostStart(){
+  linkReset();const pc=newPc();setupCh(pc.createDataChannel('lt',{ordered:true}),'host');
+  await pc.setLocalDescription(await pc.createOffer());await iceDone(pc);
+  const code=pack(pc.localDescription.sdp,'o');
+  if(code.endsWith('|'))return linkReset('No local network found. Connect this device to Wi-Fi and try again.');
+  showCode('Step 1 of 2','On the other device open Settings → Link devices → Join, and scan this code. Then tap “Scan reply”.',code,'<button class="new" data-lscan="a">Scan reply</button>');
+}
+async function hostAnswer(txt){
+  const d=unpack(txt,'a');if(!d||!G.pc||G.pc.signalingState!=='have-local-offer')return toast('That is not a reply code from this app.');
+  stopScan();showWait('Connecting…');G.timer=setTimeout(()=>linkReset('Could not connect. Make sure both devices are on the same Wi-Fi (not a guest network) and try again.'),12000);
+  try{await G.pc.setRemoteDescription({type:'answer',sdp:sdpOf(d,'active')})}catch(e){linkReset('That reply code did not work. Start again.')}
+}
+async function guestJoin(txt){
+  const d=unpack(txt,'o');if(!d)return toast('That is not a host code from this app.');
+  stopScan();linkReset();const pc=newPc();pc.ondatachannel=e=>{if(e.channel.label==='lt')setupCh(e.channel,'guest')};
+  try{await pc.setRemoteDescription({type:'offer',sdp:sdpOf(d,'actpass')});await pc.setLocalDescription(await pc.createAnswer());await iceDone(pc)}
+  catch(e){return linkReset('That code did not work. Ask the host to start again.')}
+  const code=pack(pc.localDescription.sdp,'a');
+  if(code.endsWith('|'))return linkReset('No local network found. Connect this device to Wi-Fi and try again.');
+  G.timer=setTimeout(()=>{if(!G.role)linkReset('Could not connect. Make sure both devices are on the same Wi-Fi (not a guest network) and try again.')},120000);
+  showCode('Step 2 of 2','Let the host device scan this code.',code,'');
+}
+
+/* host: berichten van een gast — alleen bekende acties, met grenzen en een snelheidslimiet */
+const isInt=(v,a,b)=>Number.isInteger(v)&&v>=a&&v<=b;
+function fromGuest(raw){
+  const now=Date.now();G.tok=Math.min(20,G.tok+(now-G.tt)/50);G.tt=now;if(G.tok<1)return;G.tok--;
+  if(raw.length>300)return;let m;try{m=JSON.parse(raw)}catch(e){return}if(!m||typeof m!=='object')return;
+  const pl=v=>isInt(v,0,S.n-1),kOk=k=>typeof k==='string'&&COUNTERS.some(t=>t.k===k);
+  switch(m.a){
+    case 'life':if(pl(m.i)&&isInt(m.d,-10,10)&&m.d)life(m.i,m.d);break;
+    case 'cmd':if(pl(m.i)&&pl(m.f)&&m.i!==m.f&&(m.d===1||m.d===-1))cmd(m.i,m.f,m.d);break;
+    case 'cn':if(pl(m.i)&&kOk(m.k)&&(m.d===1||m.d===-1))ctrChange(m.i,m.k,m.d);break;
+    case 'cntog':if(pl(m.i)&&kOk(m.k))ctrToggle(m.i,m.k);break;
+    case 'mana':if(m.clr==='mana'||m.clr==='storm')manaChange(null,0,m.clr);else if((m.m==='s'||isInt(m.m,0,5))&&(m.d===1||m.d===-1))manaChange(m.m,m.d);break;
+    case 'end':endTurn();break;
+    case 'undo':undoTurn(true);if(!sheet.hidden&&sheet.querySelector('.hlist'))showHistory();break;
+  }
+}
+/* gast: stand van de host — eerst volledig controleren en opschonen, dan pas gebruiken */
+function cleanState(s){
+  if(!s||typeof s!=='object'||!Array.isArray(s.players)||s.players.length!==6)return null;
+  const int=(v,a,b,d)=>isInt(v,a,b)?v:d,n=int(s.n,2,6,4),six=(a,lo,hi)=>[0,1,2,3,4,5].map(k=>int(Array.isArray(a)?a[k]:0,lo,hi,0));
+  const players=s.players.map((p,i)=>{p=p&&typeof p==='object'?p:{};const o={name:typeof p.name==='string'&&p.name.trim()?p.name.slice(0,18):`Player ${i+1}`,
+      color:int(p.color,0,5,i),life:int(p.life,-99999,99999,40),cmd:six(p.cmd,0,999)};
+    if(okArt(p.art)){o.art=p.art;o.artist=typeof p.artist==='string'?p.artist.slice(0,60):''}
+    if(p.cn&&typeof p.cn==='object')o.cn=Object.fromEntries(COUNTERS.filter(t=>Object.hasOwn(p.cn,t.k)).map(t=>[t.k,int(p.cn[t.k],0,999,0)]));
+    return o});
+  const ID=/^[0-9a-f-]{36}$/,ids=a=>Array.isArray(a)?a.filter(x=>typeof x==='string'&&ID.test(x)).slice(0,500):[],q=s.pc&&typeof s.pc==='object'?s.pc:{};
+  const pc={on:!!q.on,off:ids(q.off),deck:ids(q.deck),pos:int(q.pos,0,499,0),cost:int(q.cost,0,99,0),last:['pw','chaos','blank'].includes(q.last)?q.last:null,defs:1};
+  let tt;const r=s.tt;
+  if(r&&typeof r==='object'&&isInt(r.active,0,n-1)&&isInt(r.start,0,n-1)&&Array.isArray(r.log)){
+    const log=r.log.slice(-400).filter(g=>g&&isInt(g.r,1,9999)&&isInt(g.p,0,n-1)&&Array.isArray(g.ev)).map(g=>({r:g.r,p:g.p,
+      ev:g.ev.slice(0,12).filter(e=>e&&isInt(e.t,0,n-1)).map(e=>({t:e.t,from:int(e.from,-99999,99999,0),to:int(e.to,-99999,99999,0),src:Array.isArray(e.src)?e.src.filter(x=>isInt(x,0,n-1)).slice(0,6):[]}))}));
+    if(log.length)tt={start:r.start,active:r.active,round:int(r.round,1,9999,1),log};
+  }
+  return{n,start:int(s.start,1,9999,40),link:!!s.link,turnOn:!!s.turnOn,mana:six(s.mana,0,999),storm:int(s.storm,0,999,0),players,pc,tt};
+}
+function fromHost(raw){
+  if(raw.length>300000)return;let m;try{m=JSON.parse(raw)}catch(e){return}if(m?.t!=='s')return;
+  const c=cleanState(m.s);if(!c)return;
+  S={...S,...c};if(!c.tt)delete S.tt;open.forEach(i=>{if(i>=S.n)open.delete(i)});
+  try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}render();
+  if(!pop.hidden&&popKind==='mana')pop.innerHTML=manaHtml();if(!sheet.hidden&&sheet.querySelector('.hlist'))showHistory();
+}
+
+/* schermen */
+function qrSvg(t){try{const q=qrcode(0,'M');q.addData(t);q.make();return q.createSvgTag({cellSize:6,margin:3,scalable:true})}catch(e){return ''}}
+function showLink(){
+  const st=G.role==='host'?'This device is the host. One device is linked.':G.role==='guest'?'This device is linked to a host. Its own game is kept and comes back when you disconnect.':'';
+  sheet.innerHTML=`<div class="box lbox" role="dialog" aria-label="Link devices"><h2>Link devices</h2>
+    ${G.role?`<p class="lmsg">${st}</p><div class="acts"><button data-loff>Disconnect</button><button class="new" data-close>Done</button></div>`:
+    `<p class="lmsg">Use two devices on the same Wi-Fi as one tracker. Nothing goes through the internet: the devices exchange two QR codes and then talk directly, encrypted.</p>
+     <div class="acts"><button class="new" data-lhost>Host (show code)</button><button data-lscan="o">Join (scan code)</button></div>
+     <div class="acts"><button data-back>Back</button></div>`}</div>`;
+  sheet.hidden=false;
+}
+function showWait(t){sheet.innerHTML=`<div class="box lbox" role="dialog" aria-label="Link devices"><h2>Link devices</h2><p class="lmsg">${t}</p><div class="acts"><button data-loff>Cancel</button></div></div>`;sheet.hidden=false}
+function showCode(step,help,code,btn){
+  sheet.innerHTML=`<div class="box lbox" role="dialog" aria-label="Link devices"><h2>Link devices <small>${step}</small></h2><p class="lmsg">${help}</p>
+    <div class="qr">${qrSvg(code)}</div>
+    <details class="lalt"><summary>Can't scan?</summary><p class="lmsg">Copy this code to the other device:</p><textarea readonly rows="3">${esc(code)}</textarea><button data-lcopy>Copy code</button></details>
+    <div class="acts">${btn}<button data-loff>Cancel</button></div></div>`;
+  sheet.hidden=false;sheet.querySelector('textarea').value=code;
+}
+/* camera alleen tijdens het scannen; daarna direct uit. Geen scanner in de browser: code plakken */
+async function startScan(kind){
+  stopScan();const hasBD='BarcodeDetector' in window;
+  sheet.innerHTML=`<div class="box lbox" role="dialog" aria-label="Scan code"><h2>Scan ${kind==='o'?'the host':'the reply'} code</h2>
+    ${hasBD?'<video class="lvid" playsinline muted></video><p class="lmsg" id="lst">Point the camera at the code on the other device.</p>':'<p class="lmsg">This browser cannot scan QR codes. Paste the code text instead.</p>'}
+    <form class="lpaste"><textarea id="lcode" rows="3" placeholder="Or paste the code here" autocomplete="off"></textarea><button>Use code</button></form>
+    <div class="acts"><button data-loff>Cancel</button></div></div>`;
+  sheet.hidden=false;sheet.querySelector('.lpaste').dataset.kind=kind;if(!hasBD)return;
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}),v=sheet.querySelector('.lvid');
+    if(!v){stream.getTracks().forEach(t=>t.stop());return}
+    G.scan={stream,on:true};v.srcObject=stream;await v.play();const bd=new BarcodeDetector({formats:['qr_code']});
+    (async function loop(){if(!G.scan?.on)return;try{const r=await bd.detect(v);const hit=r.find(x=>x.rawValue?.startsWith('LT1|'));if(hit){useCode(kind,hit.rawValue);return}}catch(e){}setTimeout(loop,250)})();
+  }catch(e){const s=$('#lst');if(s)s.textContent='The camera could not be opened. Allow camera access, or paste the code below.'}
+}
+function stopScan(){if(G.scan){G.scan.on=false;G.scan.stream.getTracks().forEach(t=>t.stop());G.scan=null}}
+function useCode(kind,txt){kind==='o'?guestJoin(txt):hostAnswer(txt)}
+sheet.addEventListener('submit',e=>{const f=e.target.closest('.lpaste');if(!f)return;e.preventDefault();useCode(f.dataset.kind,$('#lcode').value)});
+sheet.addEventListener('click',e=>{if(e.target===sheet)return stopScan();const b=e.target.closest('button');if(!b)return;const ds=b.dataset;
+  if('close' in ds||'back' in ds)stopScan();
+  if('lhost' in ds)hostStart().catch(()=>linkReset('Linking is not supported on this device.'));
+  else if(ds.lscan)startScan(ds.lscan);
+  else if('loff' in ds){linkReset(G.role?'Disconnected.':'');showLink()}
+  else if('llink' in ds)showLink();
+  else if('lcopy' in ds){const t=sheet.querySelector('.lalt textarea');navigator.clipboard?.writeText(t.value).then(()=>toast('Code copied.'),()=>{t.select()})}
+});
+try{const b=JSON.parse(localStorage.getItem(GBK));if(b?.players?.length===6){S=b;save()}localStorage.removeItem(GBK)}catch(e){}
 
 /* ==== Scherm aan houden ==== */
 let lock=null;

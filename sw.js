@@ -1,5 +1,5 @@
 /* Service worker: app offline beschikbaar; eigen bestanden eerst van het netwerk (snelle updates), fonts en gekozen art uit de cache */
-const V='lt-v3',ART='lt-art',SHELL=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png'];
+const V='lt-v4',ART='lt-art',SHELL=['./','index.html','qrcode.js','manifest.webmanifest','icon-192.png','icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)));self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V&&k!==ART).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{
