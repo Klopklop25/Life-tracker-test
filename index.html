@@ -344,6 +344,67 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 <!-- qrcode-generator 1.4.4 (MIT, Kazuhiko Arase), via npm met integriteitscontrole; lokaal zodat er niets van buiten geladen wordt -->
 <script src="qrcode.js"></script>
 <script>
+/* ==== Taal: Engels is de brontekst, NL vertaalt per zin ({x} = invulwaarde). Keuze per apparaat in localStorage ==== */
+let LANG=(()=>{try{const l=localStorage.getItem('lt-lang');if(l==='nl'||l==='en')return l}catch(e){}return /^nl\b/i.test(navigator.language||'')?'nl':'en'})();
+const NL={
+  'White':'Wit','Blue':'Blauw','Black':'Zwart','Red':'Rood','Green':'Groen','Gold':'Goud','Colorless':'Kleurloos',
+  'Poison':'Gif','Commander tax':'Commander-tax','Energy':'Energie','Experience':'Ervaring','Rad':'Rad','Tickets':'Tickets','Monarch':'Monarch','Initiative':'Initiatief',"City's blessing":'Stadszegen',
+  'Player counters':'Spelertellers','Close':'Sluiten','Illus.':'Illus.','Goes first':'Begint','Commander damage':'Commandant-schade','End turn':'Einde beurt',
+  'Commander damage from {n} minus 1':'Commandant-schade van {n} min 1','Commander damage from {n} plus 1':'Commandant-schade van {n} plus 1',
+  'Turn and match history':'Beurt en spelgeschiedenis','T':'R','Number of players':'Aantal spelers','Starting life':'Startlevens','Who goes first':'Wie begint',
+  'Dice':'Dobbelstenen','Mana and storm':'Mana en storm','Restart':'Opnieuw beginnen','Rotate view 180 degrees':'Weergave 180 graden draaien',
+  'Linked device':'Gekoppeld apparaat','Names and settings':'Namen en instellingen','Eliminated':'Uitgeschakeld','10 poison':'10 gif',
+  '{n} commander damage':'{n} commandant-schade','Minus 1':'Min 1','Plus 1':'Plus 1','Commander damage taken':'Ontvangen commandant-schade',
+  'Turn {r}':'Ronde {r}',"{n}'s turn":'Beurt van {n}','In progress':'Bezig','No life changes':'Geen levenswijzigingen',
+  'commander damage from {n}':'commandant-schade van {n}','Match history':'Spelgeschiedenis','Tap the crown to choose who goes first.':'Tik op de kroon om te kiezen wie begint.',
+  'Undo end turn':'Einde beurt ongedaan maken','Done':'Klaar','Only the host device can change this.':'Alleen het hostapparaat kan dit aanpassen.',
+  'Player {n} name':'Naam speler {n}','Player {n}':'Speler {n}','Flip a coin':'Munt opgooien','Coin':'Munt','Heads':'Kop','Tails':'Munt',
+  'Custom starting life':'Eigen startlevens','Set':'Instellen','{n} minus 1':'{n} min 1','{n} plus 1':'{n} plus 1','Reset to zero':'Op nul zetten',
+  'Rotate 180 degrees':'180 graden draaien','Save profile of player {n}':'Profiel van speler {n} opslaan','Load a profile for player {n}':'Profiel laden voor speler {n}',
+  'Choose art for player {n}':'Afbeelding kiezen voor speler {n}','Settings':'Instellingen','Fullscreen':'Volledig scherm','Link devices':'Apparaten koppelen',
+  'linked · this device is the host':'gekoppeld · dit apparaat is de host','linked to a host device':'gekoppeld aan een hostapparaat',
+  'use a phone and a tablet as one tracker':'gebruik een telefoon en tablet als één tracker',
+  'Names, colors, art and game rules are set on the host device.':'Namen, kleuren, afbeeldingen en spelregels stel je in op het hostapparaat.',
+  'Names and colors':'Namen en kleuren','Language':'Taal','Theme':'Thema','Auto':'Automatisch','Light':'Licht','Dark':'Donker',
+  'Commander damage reduces life':'Commandant-schade gaat van levens af','Show opponents for commander damage':'Tegenstanders tonen voor commandant-schade',
+  'Track turn order and history':'Beurtvolgorde en geschiedenis bijhouden','One-sided view':'Eenzijdige weergave','all players face this side':'alle spelers naar deze kant',
+  'Profiles':'Profielen','Load profile':'Profiel laden','for {n}':'voor {n}','Delete profile {n}':'Profiel {n} verwijderen',
+  'No saved profiles yet. Use the save button next to a name to store its name, color and art.':'Nog geen opgeslagen profielen. Gebruik de opslaanknop naast een naam om naam, kleur en afbeelding te bewaren.',
+  'Back':'Terug','Choose art':'Afbeelding kiezen','Art for {n}':'Afbeelding voor {n}','Card name, e.g. Atraxa':'Kaartnaam, bijv. Atraxa','Card name':'Kaartnaam',
+  'Search':'Zoeken','Remove art':'Afbeelding verwijderen','Searching…':'Zoeken…',
+  'No cards found. Check the spelling or try part of the name.':'Geen kaarten gevonden. Controleer de spelling of probeer een deel van de naam.',
+  'No artwork found for this card.':'Geen afbeeldingen gevonden voor deze kaart.',
+  'Search failed. Check the internet connection and try again.':'Zoeken mislukt. Controleer de internetverbinding en probeer het opnieuw.',
+  'Could not load the planes.':'De planes konden niet geladen worden.','Try again':'Opnieuw proberen','No planes selected.':'Geen planes geselecteerd.',
+  'Loading planes…':'Planes laden…','Roll the planar die':'Planar die gooien','Reset roll cost':'Worpkosten op nul zetten','Planeswalk':'Planeswalk','Chaos':'Chaos',
+  'Nothing happens':'Er gebeurt niets','Shuffle':'Schudden','Choose planes':'Planes kiezen','Planes':'Planes','Filter by name or set code':'Filter op naam of setcode',
+  'Filter planes':'Planes filteren','All on':'Alles aan','All off':'Alles uit',
+  'Could not load the planes. Check the internet connection.':'De planes konden niet geladen worden. Controleer de internetverbinding.',
+  'All planes in {n}':'Alle planes in {n}','Test cards':'Testkaarten','Phenomenon':'Fenomeen','Plane':'Plane','No planes match.':'Geen planes gevonden.',
+  'Could not connect. Make sure both devices are on the same Wi-Fi (not a guest network) and try again.':'Verbinden lukte niet. Zorg dat beide apparaten op hetzelfde wifi zitten (geen gastnetwerk) en probeer het opnieuw.',
+  'Connection lost.':'Verbinding verbroken.','Device linked.':'Apparaat gekoppeld.','Linked to the host device.':'Gekoppeld aan het hostapparaat.',
+  'No local network found. Connect this device to Wi-Fi and try again.':'Geen lokaal netwerk gevonden. Verbind dit apparaat met wifi en probeer het opnieuw.',
+  'Step 1 of 2':'Stap 1 van 2','Step 2 of 2':'Stap 2 van 2','Scan reply':'Antwoord scannen',
+  'On the other device open Settings → Link devices → Join, and scan this code. Then tap “Scan reply”.':'Open op het andere apparaat Instellingen → Apparaten koppelen → Meedoen, en scan deze code. Tik daarna op “Antwoord scannen”.',
+  'That is not a reply code from this app.':'Dat is geen antwoordcode van deze app.','Connecting…':'Verbinden…',
+  'That reply code did not work. Start again.':'Die antwoordcode werkte niet. Begin opnieuw.','That is not a host code from this app.':'Dat is geen hostcode van deze app.',
+  'That code did not work. Ask the host to start again.':'Die code werkte niet. Vraag de host om opnieuw te beginnen.',
+  'Let the host device scan this code.':'Laat het hostapparaat deze code scannen.',
+  'This device is the host. One device is linked.':'Dit apparaat is de host. Er is één apparaat gekoppeld.',
+  'This device is linked to a host. Its own game is kept and comes back when you disconnect.':'Dit apparaat is gekoppeld aan een host. Het eigen spel blijft bewaard en komt terug als je ontkoppelt.',
+  'Disconnect':'Ontkoppelen','Host (show code)':'Host (code tonen)','Join (scan code)':'Meedoen (code scannen)','Cancel':'Annuleren',
+  'Use two devices on the same Wi-Fi as one tracker. Nothing goes through the internet: the devices exchange two QR codes and then talk directly, encrypted.':'Gebruik twee apparaten op hetzelfde wifi als één tracker. Er gaat niets via internet: de apparaten wisselen twee QR-codes uit en praten daarna rechtstreeks en versleuteld met elkaar.',
+  "Can't scan?":'Lukt scannen niet?','Copy this code to the other device:':'Kopieer deze code naar het andere apparaat:','Copy code':'Code kopiëren',
+  'Scan code':'Code scannen','Scan the host code':'Scan de hostcode','Scan the reply code':'Scan de antwoordcode',
+  'Point the camera at the code on the other device.':'Richt de camera op de code op het andere apparaat.',
+  'This browser cannot scan QR codes. Paste the code text instead.':'Deze browser kan geen QR-codes scannen. Plak de codetekst in plaats daarvan.',
+  'Or paste the code here':'Of plak de code hier','Use code':'Code gebruiken',
+  'The camera could not be opened. Allow camera access, or paste the code below.':'De camera kon niet geopend worden. Sta cameratoegang toe, of plak de code hieronder.',
+  'Linking is not supported on this device.':'Koppelen wordt op dit apparaat niet ondersteund.','Disconnected.':'Ontkoppeld.','Code copied.':'Code gekopieerd.'};
+const T=(s,v)=>{let r=(LANG==='nl'&&NL[s])||s;if(v)r=r.replace(/\{(\w+)\}/g,(m,k)=>k in v?v[k]:m);return r};
+document.documentElement.lang=LANG;
+/* standaardnamen ("Player 3" / "Speler 3") volgen de gekozen taal; zelfgekozen namen blijven staan */
+const langNames=()=>S.players.forEach(p=>p.name=p.name.replace(/^(Player|Speler) (\d)$/,(m,a,n)=>T('Player {n}',{n})));
 const COLORS=[{n:'White',c:'#f4e7b8',t:'#1f1b10'},{n:'Blue',c:'#1f78e0',t:'#f2f8ff'},{n:'Black',c:'#4b2f73',t:'#f5efff'},{n:'Red',c:'#e5381f',t:'#fff4ef'},{n:'Green',c:'#1d9b4b',t:'#f0fff4'},{n:'Gold',c:'#f0a50e',t:'#231600'}];
 const KEY='mtg-leventeller-v1',LETHAL=21;
 const $=s=>document.querySelector(s),board=$('#board'),sheet=$('#sheet');
@@ -387,11 +448,11 @@ const ICON_MENU='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 
 
 /* ==== Status ==== */
 const fresh=(n,start,prev)=>({n,start,link:prev?prev.link:true,theme:prev?.theme||'auto',cmdRow:!!prev?.cmdRow,turnOn:!!prev?.turnOn,oneSide:!!prev?.oneSide,
-  pc:prev?.pc?{...prev.pc,deck:[],pos:0,cost:0,last:null}:undefined,mana:[0,0,0,0,0,0],storm:0,players:[0,1,2,3,4,5].map(i=>{const q=prev?.players[i];return{name:q?q.name:`Player ${i+1}`,color:q?q.color:i,...(q?.art&&{art:q.art,artist:q.artist}),life:start,cmd:[0,0,0,0,0,0]}})});
+  pc:prev?.pc?{...prev.pc,deck:[],pos:0,cost:0,last:null}:undefined,mana:[0,0,0,0,0,0],storm:0,players:[0,1,2,3,4,5].map(i=>{const q=prev?.players[i];return{name:q?q.name:T('Player {n}',{n:i+1}),color:q?q.color:i,...(q?.art&&{art:q.art,artist:q.artist}),life:start,cmd:[0,0,0,0,0,0]}})});
 const load=()=>{try{const s=JSON.parse(localStorage.getItem(KEY));return s&&s.players&&s.players.length===6?s:null}catch(e){return null}};
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}linkSync()};
 let S=load()||fresh(4,40);
-S.mana??=[0,0,0,0,0,0];S.storm??=0;S.players.forEach(p=>p.name=p.name.replace(/^Speler (\d)$/,'Player $1'));
+S.mana??=[0,0,0,0,0,0];S.storm??=0;langNames();
 S.theme??='auto';S.pc??={on:false,off:[],deck:[],pos:0,cost:0,last:null};
 function applyTheme(){
   const r=document.documentElement,t=S.theme;if(t==='auto')delete r.dataset.theme;else r.dataset.theme=t;
@@ -422,13 +483,13 @@ const isDead=p=>p.life<=0||p.cmd.some((v,j)=>j<S.n&&v>=LETHAL)||(p.cn?.poison??0
 const openCtr=new Set();
 /* actieve tellers linksboven: tellers met −/+ helften, vlaggen (monarch e.d.) alleen als embleem */
 function ctrHtml(p){
-  return COUNTERS.filter(t=>p.cn&&t.k in p.cn).map(t=>t.flag?`<div class="ctr flag" title="${t.n}">${ctrIco(t)}</div>`
+  return COUNTERS.filter(t=>p.cn&&t.k in p.cn).map(t=>t.flag?`<div class="ctr flag" title="${T(t.n)}">${ctrIco(t)}</div>`
     :`<div class="ctr${t.lethal&&p.cn[t.k]>=t.lethal?' d':''}">${ctrIco(t)}<b>${p.cn[t.k]}</b>
       <button data-act="cn" data-k="${t.k}" data-d="-1" aria-label="${t.n} minus"></button><button data-act="cn" data-k="${t.k}" data-d="1" aria-label="${t.n} plus"></button></div>`).join('');
 }
 function cpanelHtml(p){
-  return `<header><span>Player counters</span><button data-act="cnx" aria-label="Close">×</button></header>
-    <div class="cgrid">${COUNTERS.map(t=>`<button class="copt${p.cn&&t.k in p.cn?' on':''}" data-act="cntog" data-k="${t.k}">${ctrIco(t)}<span>${t.n}</span></button>`).join('')}</div>`;
+  return `<header><span>${T('Player counters')}</span><button data-act="cnx" aria-label="${T('Close')}">×</button></header>
+    <div class="cgrid">${COUNTERS.map(t=>`<button class="copt${p.cn&&t.k in p.cn?' on':''}" data-act="cntog" data-k="${t.k}">${ctrIco(t)}<span>${T(t.n)}</span></button>`).join('')}</div>`;
 }
 
 /* ==== Weergave ==== */
@@ -439,13 +500,13 @@ function render(){
     const p=S.players[i],col=COLORS[p.color],[c,r]=L[1][i];
     const art=okArt(p.art);
     h+=`<div class="tile${art?' has-art':''}${tOn()&&S.tt.active===i?' turn':''}" data-i="${i}" style="--c:${col.c};--t:${art?'#fff':col.t};grid-column:${c};grid-row:${r}"><div class="inner${turn(i)}">
-      ${art?`<div class="art" style="background-image:url('${art}')"></div><div class="credit">${p.artist?'Illus. '+esc(p.artist):''}</div>`:''}
+      ${art?`<div class="art" style="background-image:url('${art}')"></div><div class="credit">${p.artist?T('Illus.')+' '+esc(p.artist):''}</div>`:''}
       <div class="zone" data-z="-1"></div><div class="zone" data-z="1"></div>
       <span class="sign m">−</span><span class="sign p">+</span>
-      <div class="name" data-act="name"></div><div class="delta"></div><div class="life"></div><div class="out"></div><div class="start">Goes first</div>
-      ${rowOk()?oppRow(i):`<button class="cmdbtn" data-act="cmd" aria-label="Commander damage">${ICON_CMD}<span></span></button>`}
-      <div class="ctrs"></div><button class="more" data-act="more" aria-label="Player counters">${ico(I_MORE)}</button>
-      ${tOn()&&S.tt.active===i?`<button class="endturn" data-act="endturn">End turn${ico('<path d="M5 12h13M13 6l6 6-6 6"/>')}</button>`:''}
+      <div class="name" data-act="name"></div><div class="delta"></div><div class="life"></div><div class="out"></div><div class="start">${T('Goes first')}</div>
+      ${rowOk()?oppRow(i):`<button class="cmdbtn" data-act="cmd" aria-label="${T('Commander damage')}">${ICON_CMD}<span></span></button>`}
+      <div class="ctrs"></div><button class="more" data-act="more" aria-label="${T('Player counters')}">${ico(I_MORE)}</button>
+      ${tOn()&&S.tt.active===i?`<button class="endturn" data-act="endturn">${T('End turn')}${ico('<path d="M5 12h13M13 6l6 6-6 6"/>')}</button>`:''}
       <div class="cmd" hidden></div><div class="cmd cpanel" hidden></div></div></div>`;
   }
   if(pcOn()){h+=`<div class="tile plane" style="grid-column:-2/-1;grid-row:1/4"></div>`;if(!PL.cards&&!PL.state)loadPlanes()}
@@ -462,22 +523,22 @@ function oppRow(i){
   let r='';
   for(let j=0;j<S.n;j++){if(j===i)continue;const o=S.players[j],a=okArt(o.art);
     r+=`<div class="chip" data-f="${j}" style="--c:${COLORS[o.color].c}${a?`;background-image:url('${a}')`:''}"><b></b>
-      <button data-act="cd" data-f="${j}" data-d="-1" aria-label="Commander damage from ${esc(o.name)} minus 1"></button><button data-act="cd" data-f="${j}" data-d="1" aria-label="Commander damage from ${esc(o.name)} plus 1"></button></div>`}
+      <button data-act="cd" data-f="${j}" data-d="-1" aria-label="${T('Commander damage from {n} minus 1',{n:esc(o.name)})}"></button><button data-act="cd" data-f="${j}" data-d="1" aria-label="${T('Commander damage from {n} plus 1',{n:esc(o.name)})}"></button></div>`}
   return `<div class="opps">${r}</div>`;
 }
 function bar(){
   const tint=(d,c)=>ico(d).replace('<svg ',`<svg class="${c}" `);
-  board.querySelector('.bar').innerHTML=(S.turnOn?`<button data-act="hist" class="tturn" aria-label="Turn and match history">${ico('<path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 3.5V8h4.5"/><path d="M12 7.5V12l3 2"/>')}<b>${tOn()?'T'+S.tt.round:'–'}</b></button>`:'')+
-    `<button data-act="n" aria-label="Number of players">${tint(I_PERSON,'ig')}<b>${S.n}</b></button>
-    <button data-act="start" aria-label="Starting life">${tint(I_HEART,'ir')}<b>${S.start}</b></button>
-    <button data-act="first" class="ic" aria-label="Who goes first">${tint(I_CROWN,'iy')}</button>
-    <button data-act="dice" class="ic" aria-label="Dice">${ico(I_DIE)}</button>
-    <button data-act="mana" class="ic" aria-label="Mana and storm">${ico(I_MANA)}</button>
+  board.querySelector('.bar').innerHTML=(S.turnOn?`<button data-act="hist" class="tturn" aria-label="${T('Turn and match history')}">${ico('<path d="M3.5 12a8.5 8.5 0 1 0 2.5-6"/><path d="M3 3.5V8h4.5"/><path d="M12 7.5V12l3 2"/>')}<b>${tOn()?T('T')+S.tt.round:'–'}</b></button>`:'')+
+    `<button data-act="n" aria-label="${T('Number of players')}">${tint(I_PERSON,'ig')}<b>${S.n}</b></button>
+    <button data-act="start" aria-label="${T('Starting life')}">${tint(I_HEART,'ir')}<b>${S.start}</b></button>
+    <button data-act="first" class="ic" aria-label="${T('Who goes first')}">${tint(I_CROWN,'iy')}</button>
+    <button data-act="dice" class="ic" aria-label="${T('Dice')}">${ico(I_DIE)}</button>
+    <button data-act="mana" class="ic" aria-label="${T('Mana and storm')}">${ico(I_MANA)}</button>
     <button data-act="pc" class="ic${S.pc.on?' on':''}" aria-label="Planechase">${I_PC}</button>
-    <button data-act="new" class="${sure?'sure':'ic'}" aria-label="Restart">${ico(I_RESET)}${sure?'<b>?</b>':''}</button>
-    ${S.oneSide?`<button data-act="flip" class="ic" aria-label="Rotate view 180 degrees">${ico(I_TURN)}</button>`:''}
-    ${G.role?`<button data-act="link" class="ic linked" aria-label="Linked device">${ico(I_LINK)}</button>`:''}
-    <button data-act="menu" class="ic" aria-label="Names and settings">${ICON_MENU}</button>`;
+    <button data-act="new" class="${sure?'sure':'ic'}" aria-label="${T('Restart')}">${ico(I_RESET)}${sure?'<b>?</b>':''}</button>
+    ${S.oneSide?`<button data-act="flip" class="ic" aria-label="${T('Rotate view 180 degrees')}">${ico(I_TURN)}</button>`:''}
+    ${G.role?`<button data-act="link" class="ic linked" aria-label="${T('Linked device')}">${ico(I_LINK)}</button>`:''}
+    <button data-act="menu" class="ic" aria-label="${T('Names and settings')}">${ICON_MENU}</button>`;
 }
 function update(i){
   const p=S.players[i],el=board.querySelector(`.tile[data-i="${i}"]`);if(!el)return;
@@ -487,7 +548,7 @@ function update(i){
   if(cb){cb.querySelector('span').textContent=tot?tot:'';cb.classList.toggle('hot',p.cmd.some((v,j)=>j<S.n&&v>=15))}
   el.querySelectorAll('.chip').forEach(c=>{const v=p.cmd[+c.dataset.f];c.querySelector('b').textContent=v;c.classList.toggle('w',v>=15&&v<LETHAL);c.classList.toggle('d',v>=LETHAL)});
   const dead=isDead(p);el.classList.toggle('dead',dead);
-  el.querySelector('.out').textContent=p.life<=0?'Eliminated':(p.cn?.poison??0)>=10?'10 poison':`${LETHAL} commander damage`;
+  el.querySelector('.out').textContent=p.life<=0?T('Eliminated'):(p.cn?.poison??0)>=10?T('10 poison'):T('{n} commander damage',{n:LETHAL});
   const d=pend[i],de=el.querySelector('.delta');de.textContent=d>0?'+'+d:d<0?'−'+(-d):'';de.classList.toggle('on',!!d);
   const c=el.querySelector('.cmd');c.hidden=!open.has(i);if(open.has(i))c.innerHTML=cmdHtml(i);
   el.querySelector('.ctrs').innerHTML=ctrHtml(p);
@@ -497,8 +558,8 @@ function cmdHtml(i){
   const p=S.players[i];let r='';
   for(let j=0;j<S.n;j++){if(j===i)continue;const o=S.players[j],v=p.cmd[j];
     r+=`<div class="row"><div class="who"><i class="dot" style="--c:${COLORS[o.color].c}"></i><span>${esc(o.name)}</span></div>
-      <button data-act="cd" data-f="${j}" data-d="-1" aria-label="Minus 1">−</button><b class="${v>=LETHAL?'d':v>=15?'w':''}">${v}</b><button data-act="cd" data-f="${j}" data-d="1" aria-label="Plus 1">+</button></div>`;}
-  return `<header><span>Commander damage taken</span><button data-act="cmdx" aria-label="Close">×</button></header><div class="rows">${r}</div>`;
+      <button data-act="cd" data-f="${j}" data-d="-1" aria-label="${T('Minus 1')}">−</button><b class="${v>=LETHAL?'d':v>=15?'w':''}">${v}</b><button data-act="cd" data-f="${j}" data-d="1" aria-label="${T('Plus 1')}">+</button></div>`;}
+  return `<header><span>${T('Commander damage taken')}</span><button data-act="cmdx" aria-label="${T('Close')}">×</button></header><div class="rows">${r}</div>`;
 }
 
 /* ==== Acties ==== */
@@ -541,14 +602,14 @@ function showHistory(){
   const tt=S.tt,nm=i=>esc(S.players[i].name),dot=i=>`<i class="hdot" style="--c:${COLORS[S.players[i].color].c}"></i>`;
   let h='',r=0;
   if(tt)tt.log.forEach((g,k)=>{
-    if(g.r!==r){r=g.r;h+=`<div class="hround">Turn ${r}</div>`}
+    if(g.r!==r){r=g.r;h+=`<div class="hround">${T('Turn {r}',{r})}</div>`}
     const now=k===tt.log.length-1;
-    h+=`<div class="hturn${now?' now':''}"><div class="hwho"><span>${nm(g.p)}'s turn</span>${now?'<em>In progress</em>':g.ev.length?'':'<em>No life changes</em>'}</div>
-      ${g.ev.map(e=>{const d=e.to-e.from;return `<div class="hrow">${dot(e.t)}<span>${nm(e.t)}${e.src.length?` <small>· commander damage from ${e.src.map(nm).join(', ')}</small>`:''}</span><b class="${d<0?'neg':'pos'}">${d>0?'+':d<0?'−':''}${Math.abs(d)}</b><small>${e.from} → ${e.to}</small></div>`}).join('')}</div>`});
-  sheet.innerHTML=`<div class="box wide" role="dialog" aria-label="Match history"><div class="hhead"><div><h2>Match history</h2>
-      <span class="hsub">${tt?`Turn ${tt.round} · ${nm(tt.active)}'s turn`:'Tap the crown to choose who goes first.'}</span></div>
-      ${tt&&tt.log.length>1?`<button class="hundo" data-undo>${ico('<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>')}Undo end turn</button>`:''}</div>
-    <div class="hlist">${h}</div><div class="acts"><button class="new" data-close>Done</button></div></div>`;
+    h+=`<div class="hturn${now?' now':''}"><div class="hwho"><span>${T("{n}'s turn",{n:nm(g.p)})}</span>${now?'<em>'+T('In progress')+'</em>':g.ev.length?'':'<em>'+T('No life changes')+'</em>'}</div>
+      ${g.ev.map(e=>{const d=e.to-e.from;return `<div class="hrow">${dot(e.t)}<span>${nm(e.t)}${e.src.length?` <small>· ${T('commander damage from {n}',{n:e.src.map(nm).join(', ')})}</small>`:''}</span><b class="${d<0?'neg':'pos'}">${d>0?'+':d<0?'−':''}${Math.abs(d)}</b><small>${e.from} → ${e.to}</small></div>`}).join('')}</div>`});
+  sheet.innerHTML=`<div class="box wide" role="dialog" aria-label="${T('Match history')}"><div class="hhead"><div><h2>${T('Match history')}</h2>
+      <span class="hsub">${tt?T('Turn {r}',{r:tt.round})+' · '+T("{n}'s turn",{n:nm(tt.active)}):T('Tap the crown to choose who goes first.')}</span></div>
+      ${tt&&tt.log.length>1?`<button class="hundo" data-undo>${ico('<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>')}${T('Undo end turn')}</button>`:''}</div>
+    <div class="hlist">${h}</div><div class="acts"><button class="new" data-close>${T('Done')}</button></div></div>`;
   sheet.hidden=false;const l=sheet.querySelector('.hlist');l.scrollTop=l.scrollHeight;
 }
 
@@ -566,7 +627,7 @@ board.addEventListener('contextmenu',e=>e.preventDefault());
 board.addEventListener('click',e=>{
   const b=e.target.closest('[data-act]');if(!b)return;
   const t=b.closest('.tile'),i=t?+t.dataset.i:-1,a=b.dataset.act;
-  if(G.role==='guest'&&HOSTONLY.has(a))return toast('Only the host device can change this.');
+  if(G.role==='guest'&&HOSTONLY.has(a))return toast(T('Only the host device can change this.'));
   if(a==='cmd'){open.add(i);update(i)}
   else if(a==='cmdx'){open.delete(i);update(i)}
   else if(a==='more'){openCtr.add(i);update(i)}
@@ -594,9 +655,9 @@ board.addEventListener('click',e=>{
 /* ==== Naam wijzigen in het vak ==== */
 function editName(i,el){
   if(el.querySelector('input'))return;
-  el.innerHTML=`<input class="namein" value="${esc(S.players[i].name)}" maxlength="18" enterkeyhint="done" aria-label="Player ${i+1} name">`;
+  el.innerHTML=`<input class="namein" value="${esc(S.players[i].name)}" maxlength="18" enterkeyhint="done" aria-label="${T('Player {n} name',{n:i+1})}">`;
   const inp=el.firstChild;inp.focus();inp.select();
-  const done=keep=>{if(!inp.isConnected)return;if(keep)S.players[i].name=inp.value.trim()||`Player ${i+1}`;save();el.textContent=S.players[i].name};
+  const done=keep=>{if(!inp.isConnected)return;if(keep)S.players[i].name=inp.value.trim()||T('Player {n}',{n:i+1});save();el.textContent=S.players[i].name};
   inp.addEventListener('keydown',e=>{if(e.key==='Enter')done(true);else if(e.key==='Escape')done(false)});
   inp.addEventListener('blur',()=>done(true));
 }
@@ -614,32 +675,32 @@ const dieHtml=c=>`<div class="die${c}"><div class="dw" style="--ty:8px"><svg vie
 function showPop(b,k){
   if(!pop.hidden&&popKind===k){pop.hidden=true;return}
   popKind=k;clearTimeout(rollT);pop.classList.toggle('r180',k==='mana'&&manaRot);
-  if(k==='dice')pop.innerHTML=`<div class="opts">${DICE.map(d=>`<button data-die="${d}" aria-label="${d==='munt'?'Flip a coin':'d'+d}">${d==='munt'?ico(I_COIN):'d'+d}</button>`).join('')}</div>
+  if(k==='dice')pop.innerHTML=`<div class="opts">${DICE.map(d=>`<button data-die="${d}" aria-label="${d==='munt'?T('Flip a coin'):'d'+d}">${d==='munt'?ico(I_COIN):'d'+d}</button>`).join('')}</div>
     <div class="roll">${dieHtml('')}<span></span>${dieHtml(' dn')}</div>`;
   else if(k==='mana')pop.innerHTML=manaHtml();
   else if(k==='pc')pop.innerHTML=pcHtml();
   else{const opts=k==='n'?(S.pc.on?[2,3,4]:[2,3,4,5,6]):[20,30,40],cur=k==='n'?S.n:S.start;
     pop.innerHTML=`<div class="opts">${opts.map(v=>`<button data-v="${v}" class="${v===cur?'on':''}">${v}</button>`).join('')}</div>`+
-      (k==='start'?`<form class="custom"><input id="lifeIn" type="number" inputmode="numeric" min="1" max="9999" value="${S.start}" aria-label="Custom starting life"><button>Set</button></form>`:'')}
+      (k==='start'?`<form class="custom"><input id="lifeIn" type="number" inputmode="numeric" min="1" max="9999" value="${S.start}" aria-label="${T('Custom starting life')}"><button>${T('Set')}</button></form>`:'')}
   pop.hidden=false;const r=b.getBoundingClientRect(),w=pop.offsetWidth;
   const h=pop.offsetHeight;
   pop.style.left=Math.min(innerWidth-w/2-8,Math.max(w/2+8,r.left+r.width/2))+'px';
   pop.style.top=Math.min(innerHeight-h/2-8,Math.max(h/2+8,r.top+r.height/2))+'px';
 }
 function manaHtml(){
-  const row=(m,v,i)=>`<div class="mrow${v?'':' zero'}"><button data-m="${i}" data-d="-1" aria-label="${m.n||'Storm'} minus 1">−</button>
+  const row=(m,v,i)=>`<div class="mrow${v?'':' zero'}"><button data-m="${i}" data-d="-1" aria-label="${T('{n} minus 1',{n:T(m.n||'Storm')})}">−</button>
     <i class="mi">${m.s}</i><b>${v}</b>
-    <button data-m="${i}" data-d="1" aria-label="${m.n||'Storm'} plus 1">+</button></div>`;
-  const clr=k=>`<button data-clr="${k}" aria-label="Reset to zero">${ico(I_RESET)}</button>`;
-  return `<div class="mana"><button class="turn" data-turn aria-label="Rotate 180 degrees">${ico('<path d="M4.5 12a7.5 7.5 0 0 1 13.2-4.9M19.5 12a7.5 7.5 0 0 1-13.2 4.9"/><path d="M18 3v4.5h-4.5M6 21v-4.5h4.5"/>')}</button><h3>Mana ${clr('mana')}</h3>${MANA.map((m,i)=>row(m,S.mana[i],i)).join('')}
+    <button data-m="${i}" data-d="1" aria-label="${T('{n} plus 1',{n:T(m.n||'Storm')})}">+</button></div>`;
+  const clr=k=>`<button data-clr="${k}" aria-label="${T('Reset to zero')}">${ico(I_RESET)}</button>`;
+  return `<div class="mana"><button class="turn" data-turn aria-label="${T('Rotate 180 degrees')}">${ico('<path d="M4.5 12a7.5 7.5 0 0 1 13.2-4.9M19.5 12a7.5 7.5 0 0 1-13.2 4.9"/><path d="M18 3v4.5h-4.5M6 21v-4.5h4.5"/>')}</button><h3>Mana ${clr('mana')}</h3>${MANA.map((m,i)=>row(m,S.mana[i],i)).join('')}
     <h3>Storm ${clr('storm')}</h3>${row(STORM,S.storm,'s')}</div>`;
 }
 function roll(d){
   clearTimeout(rollT);
   pop.querySelectorAll('[data-die]').forEach(b=>b.classList.toggle('on',b.dataset.die===String(d)));
-  pop.querySelector('.roll span').textContent=d==='munt'?'Coin':'d'+d;
+  pop.querySelector('.roll span').textContent=d==='munt'?T('Coin'):'d'+d;
   const[shape,ty]=SHAPES[d],red=matchMedia('(prefers-reduced-motion: reduce)').matches,dies=pop.querySelectorAll('.die'),
-    out=pop.querySelectorAll('.dw b'),val=()=>d==='munt'?(Math.random()<.5?'Heads':'Tails'):1+Math.floor(Math.random()*d);
+    out=pop.querySelectorAll('.dw b'),val=()=>d==='munt'?(Math.random()<.5?T('Heads'):T('Tails')):1+Math.floor(Math.random()*d);
   dies.forEach(el=>{el.classList.remove('fin');const w=el.querySelector('.dw');w.className='dw'+(d==='munt'?' munt':'');
     w.style.setProperty('--ty',ty+'px');w.querySelector('svg').innerHTML=shape;void w.offsetWidth;if(!red)w.classList.add(d==='munt'?'flip':'go')});
   let k=red?0:10;
@@ -680,21 +741,22 @@ let sure=false,sureT=null;
 function showMenu(){
   const fs=document.fullscreenEnabled;
   let pl='';for(let i=0;i<S.n;i++){const p=S.players[i];
-    pl+=`<div class="pl"><div class="pname"><input id="name-${i}" data-name="${i}" value="${esc(p.name)}" maxlength="18" aria-label="Player ${i+1} name">
-      <button class="pbtn" data-psave="${i}" aria-label="Save profile of player ${i+1}">${ico(I_SAVE)}</button><button class="pbtn" data-pload="${i}" aria-label="Load a profile for player ${i+1}">${ico(I_LOAD)}</button></div>
-      <div class="cols">${COLORS.map((c,k)=>`<button data-col="${i}:${k}" class="${p.color===k?'on':''}" style="--c:${c.c}" aria-label="${c.n}"></button>`).join('')}</div>
-      <button class="artbtn" data-art="${i}" aria-label="Choose art for player ${i+1}"${okArt(p.art)?` style="background-image:url('${okArt(p.art)}')"`:''}>${okArt(p.art)?'':ico(I_IMG)}</button></div>`;}
+    pl+=`<div class="pl"><div class="pname"><input id="name-${i}" data-name="${i}" value="${esc(p.name)}" maxlength="18" aria-label="${T('Player {n} name',{n:i+1})}">
+      <button class="pbtn" data-psave="${i}" aria-label="${T('Save profile of player {n}',{n:i+1})}">${ico(I_SAVE)}</button><button class="pbtn" data-pload="${i}" aria-label="${T('Load a profile for player {n}',{n:i+1})}">${ico(I_LOAD)}</button></div>
+      <div class="cols">${COLORS.map((c,k)=>`<button data-col="${i}:${k}" class="${p.color===k?'on':''}" style="--c:${c.c}" aria-label="${T(c.n)}"></button>`).join('')}</div>
+      <button class="artbtn" data-art="${i}" aria-label="${T('Choose art for player {n}',{n:i+1})}"${okArt(p.art)?` style="background-image:url('${okArt(p.art)}')"`:''}>${okArt(p.art)?'':ico(I_IMG)}</button></div>`;}
   const guest=G.role==='guest';
-  sheet.innerHTML=`<div class="box" role="dialog" aria-label="Settings"><h2>Settings</h2>
-    ${fs?`<button class="tog" data-fs><span>Fullscreen</span><i class="sw ${document.fullscreenElement?'on':''}"></i></button>`:''}
-    <button class="tog" data-llink><span>Link devices <small>${G.role==='host'?'linked · this device is the host':guest?'linked to a host device':'use a phone and a tablet as one tracker'}</small></span>${ico(I_LINK)}</button>
-    ${guest?'<p class="lmsg">Names, colors, art and game rules are set on the host device.</p>':`<div class="grp"><span class="lbl">Names and colors</span>${pl}</div>`}
-    <div class="grp"><span class="lbl">Theme</span><div class="seg">${[['auto','Auto'],['light','Light'],['dark','Dark']].map(([k,t])=>`<button data-theme-set="${k}" class="${S.theme===k?'on':''}">${t}</button>`).join('')}</div></div>
-    ${guest?'':`<button class="tog" data-link><span>Commander damage reduces life</span><i class="sw ${S.link?'on':''}"></i></button>`}
-    <button class="tog" data-cmdrow><span>Show opponents for commander damage</span><i class="sw ${S.cmdRow?'on':''}"></i></button>
-    ${guest?'':`<button class="tog" data-turnon><span>Track turn order and history</span><i class="sw ${S.turnOn?'on':''}"></i></button>`}
-    <button class="tog" data-oneside><span>One-sided view <small>all players face this side</small></span><i class="sw ${S.oneSide?'on':''}"></i></button>
-    <div class="acts"><button class="new" data-close>Done</button></div></div>`;
+  sheet.innerHTML=`<div class="box" role="dialog" aria-label="${T('Settings')}"><h2>${T('Settings')}</h2>
+    ${fs?`<button class="tog" data-fs><span>${T('Fullscreen')}</span><i class="sw ${document.fullscreenElement?'on':''}"></i></button>`:''}
+    <button class="tog" data-llink><span>${T('Link devices')} <small>${T(G.role==='host'?'linked · this device is the host':guest?'linked to a host device':'use a phone and a tablet as one tracker')}</small></span>${ico(I_LINK)}</button>
+    ${guest?'<p class="lmsg">'+T('Names, colors, art and game rules are set on the host device.')+'</p>':`<div class="grp"><span class="lbl">${T('Names and colors')}</span>${pl}</div>`}
+    <div class="grp"><span class="lbl">${T('Language')}</span><div class="seg">${[['nl','Nederlands'],['en','English']].map(([k,t])=>`<button data-lang-set="${k}" class="${LANG===k?'on':''}" lang="${k}">${t}</button>`).join('')}</div></div>
+    <div class="grp"><span class="lbl">${T('Theme')}</span><div class="seg">${[['auto',T('Auto')],['light',T('Light')],['dark',T('Dark')]].map(([k,t])=>`<button data-theme-set="${k}" class="${S.theme===k?'on':''}">${t}</button>`).join('')}</div></div>
+    ${guest?'':`<button class="tog" data-link><span>${T('Commander damage reduces life')}</span><i class="sw ${S.link?'on':''}"></i></button>`}
+    <button class="tog" data-cmdrow><span>${T('Show opponents for commander damage')}</span><i class="sw ${S.cmdRow?'on':''}"></i></button>
+    ${guest?'':`<button class="tog" data-turnon><span>${T('Track turn order and history')}</span><i class="sw ${S.turnOn?'on':''}"></i></button>`}
+    <button class="tog" data-oneside><span>${T('One-sided view')} <small>${T('all players face this side')}</small></span><i class="sw ${S.oneSide?'on':''}"></i></button>
+    <div class="acts"><button class="new" data-close>${T('Done')}</button></div></div>`;
   sheet.hidden=false;
 }
 sheet.addEventListener('click',e=>{
@@ -706,6 +768,7 @@ sheet.addEventListener('click',e=>{
   else if('oneside' in ds){S.oneSide=!S.oneSide;save();render();showMenu()}
   else if('undo' in ds)undoTurn();
   else if(ds.themeSet){S.theme=ds.themeSet;save();applyTheme();showMenu()}
+  else if(ds.langSet){LANG=ds.langSet==='nl'?'nl':'en';try{localStorage.setItem('lt-lang',LANG)}catch(e){}document.documentElement.lang=LANG;langNames();save();render();showMenu()}
   else if(ds.pall){const on=ds.pall==='1',ids=new Set(planeFilter().map(c=>c.id));S.pc.off=on?S.pc.off.filter(x=>!ids.has(x)):[...new Set([...S.pc.off,...ids])];save();listPlanes()}
   else if('pdone' in ds){sheet.hidden=true;render()}
   else if(ds.open){openSets.has(ds.open)?openSets.delete(ds.open):openSets.add(ds.open);listPlanes()}
@@ -735,10 +798,10 @@ function saveProfile(p){
 }
 function showProfiles(i){
   artFor=i;const l=loadProfiles();
-  sheet.innerHTML=`<div class="box" role="dialog" aria-label="Profiles"><h2>Load profile <small>for ${esc(S.players[i].name)}</small></h2>
+  sheet.innerHTML=`<div class="box" role="dialog" aria-label="${T('Profiles')}"><h2>${T('Load profile')} <small>${T('for {n}',{n:esc(S.players[i].name)})}</small></h2>
     <div class="profs">${l.map((q,k)=>{const a=okArt(q.art);return `<div class="prof"><button class="puse" data-puse="${k}"><i class="pthumb" style="--c:${COLORS[q.color]?.c||'#888'}${a?`;background-image:url('${a}')`:''}"></i><span>${esc(q.name)}</span></button>
-      <button class="pbtn" data-pdel="${k}" aria-label="Delete profile ${esc(q.name)}">×</button></div>`}).join('')||'<p class="msg">No saved profiles yet. Use the save button next to a name to store its name, color and art.</p>'}</div>
-    <div class="acts"><button data-back>Back</button></div></div>`;
+      <button class="pbtn" data-pdel="${k}" aria-label="${T('Delete profile {n}',{n:esc(q.name)})}">×</button></div>`}).join('')||'<p class="msg">'+T('No saved profiles yet. Use the save button next to a name to store its name, color and art.')+'</p>'}</div>
+    <div class="acts"><button data-back>${T('Back')}</button></div></div>`;
   sheet.hidden=false;
 }
 
@@ -746,31 +809,31 @@ function showProfiles(i){
 let artFor=0,found=[],searchN=0;
 function showArt(i){
   artFor=i;found=[];const p=S.players[i];
-  sheet.innerHTML=`<div class="box wide" role="dialog" aria-label="Choose art"><h2>Art for ${esc(p.name)}</h2>
-    <form class="srch"><input id="q" type="search" placeholder="Card name, e.g. Atraxa" autocomplete="off" enterkeyhint="search" aria-label="Card name"><button>Search</button></form>
+  sheet.innerHTML=`<div class="box wide" role="dialog" aria-label="${T('Choose art')}"><h2>${T('Art for {n}',{n:esc(p.name)})}</h2>
+    <form class="srch"><input id="q" type="search" placeholder="${T('Card name, e.g. Atraxa')}" autocomplete="off" enterkeyhint="search" aria-label="${T('Card name')}"><button>${T('Search')}</button></form>
     <div class="res" id="res"></div>
-    <div class="acts">${okArt(p.art)?'<button data-noart>Remove art</button>':''}<button data-back>Back</button></div></div>`;
+    <div class="acts">${okArt(p.art)?'<button data-noart>'+T('Remove art')+'</button>':''}<button data-back>${T('Back')}</button></div></div>`;
   sheet.hidden=false;$('#q').focus();
 }
 sheet.addEventListener('submit',async e=>{
   e.preventDefault();if(!$('#q'))return;const q=$('#q').value.trim(),res=$('#res'),n=++searchN;if(!q)return;
-  res.innerHTML='<p class="msg">Searching…</p>';$('#q').blur();
+  res.innerHTML='<p class="msg">'+T('Searching…')+'</p>';$('#q').blur();
   try{
     const r=await fetch('https://api.scryfall.com/cards/search?unique=art&order=released&dir=desc&q='+encodeURIComponent(q),{headers:{Accept:'application/json'}});
     if(n!==searchN)return;
-    if(r.status===404){res.innerHTML='<p class="msg">No cards found. Check the spelling or try part of the name.</p>';return}
+    if(r.status===404){res.innerHTML='<p class="msg">'+T('No cards found. Check the spelling or try part of the name.')+'</p>';return}
     if(!r.ok)throw r.status;
     const js=await r.json();found=[];
     for(const c of js.data)for(const f of c.image_uris?[c]:c.card_faces||[]){const a=okArt(f.image_uris?.art_crop);
       if(a)found.push({art:a,name:f.name||c.name,set:(c.set||'').toUpperCase(),artist:f.artist||c.artist||''})}
     found=found.slice(0,60);const cur=S.players[artFor].art;
     res.innerHTML=found.length?found.map((f,k)=>`<button data-pick="${k}" class="${f.art===cur?'on':''}"><img src="${f.art}" alt="${esc(f.name)}" loading="lazy"><small>${esc(f.name)} · ${esc(f.set)}</small></button>`).join('')
-      :'<p class="msg">No artwork found for this card.</p>';
-  }catch(err){if(n===searchN)res.innerHTML='<p class="msg">Search failed. Check the internet connection and try again.</p>'}
+      :'<p class="msg">'+T('No artwork found for this card.')+'</p>';
+  }catch(err){if(n===searchN)res.innerHTML='<p class="msg">'+T('Search failed. Check the internet connection and try again.')+'</p>'}
 });
 /* gekozen art bewaren voor offline gebruik (service worker leest deze cache) */
 function keepArt(u){try{caches.open('lt-art').then(c=>fetch(u,{mode:'no-cors'}).then(r=>c.put(u,r))).catch(()=>{})}catch(e){}}
-sheet.addEventListener('input',e=>{if(e.target.id==='pf')return listPlanes();const i=e.target.dataset.name;if(i==null)return;S.players[+i].name=e.target.value||`Player ${+i+1}`;save();update(+i)});
+sheet.addEventListener('input',e=>{if(e.target.id==='pf')return listPlanes();const i=e.target.dataset.name;if(i==null)return;S.players[+i].name=e.target.value||T('Player {n}',{n:+i+1});save();update(+i)});
 sheet.addEventListener('change',e=>{
   const{pid,set}=e.target.dataset;if(!pid&&!set)return;const o=new Set(S.pc.off);
   for(const id of set?PL.cards.filter(c=>c.set===set).map(c=>c.id):[pid])e.target.checked?o.delete(id):o.add(id);
@@ -806,9 +869,9 @@ function renderPlane(){
   const t=board.querySelector('.plane');if(!t)return;const c=curPlane();
   if(c){keepArt(c.img);const nx=PL.map.get(S.pc.deck[(S.pc.pos+1)%S.pc.deck.length]);if(nx)keepArt(nx.img)}
   t.innerHTML=`<div class="pimg">${c?`<img src="${c.img}" alt="${esc(c.name)}" data-act="zoom">`
-      :`<p>${PL.state==='err'?'Could not load the planes. <button data-act="pcload">Try again</button>':PL.cards?'No planes selected.':'Loading planes…'}</p>`}</div>
-    <div class="pbar"><button class="pdie${S.pc.last?' r-'+S.pc.last:''}" data-act="pdie" aria-label="Roll the planar die"><span class="face">${faceHtml(S.pc.last)}</span></button>
-      ${S.pc.cost?`<button class="pcost" data-act="pcost" aria-label="Reset roll cost">${ico(I_RESET)}<b>${S.pc.cost}</b></button>`:''}</div>`;
+      :`<p>${PL.state==='err'?T('Could not load the planes.')+' <button data-act="pcload">'+T('Try again')+'</button>':PL.cards?T('No planes selected.'):T('Loading planes…')}</p>`}</div>
+    <div class="pbar"><button class="pdie${S.pc.last?' r-'+S.pc.last:''}" data-act="pdie" aria-label="${T('Roll the planar die')}"><span class="face">${faceHtml(S.pc.last)}</span></button>
+      ${S.pc.cost?`<button class="pcost" data-act="pcost" aria-label="${T('Reset roll cost')}">${ico(I_RESET)}<b>${S.pc.cost}</b></button>`:''}</div>`;
 }
 /* planar die: 1x planeswalk, 1x chaos, 4x leeg; elke extra worp in dezelfde beurt kost 1 mana meer */
 function planarRoll(){
@@ -820,7 +883,7 @@ function planarRoll(){
   let k=red?0:11;
   (function tick(){
     if(k-->0){f.innerHTML=faceHtml(['pw','chaos','blank'][Math.floor(Math.random()*3)]);setTimeout(tick,45+(11-k)*14);return}
-    f.innerHTML=faceHtml(res);big.classList.add('r-'+res);ov.querySelector('.lbl').textContent=res==='pw'?'Planeswalk':res==='chaos'?'Chaos':'Nothing happens';
+    f.innerHTML=faceHtml(res);big.classList.add('r-'+res);ov.querySelector('.lbl').textContent=T(res==='pw'?'Planeswalk':res==='chaos'?'Chaos':'Nothing happens');
     S.pc.last=res;S.pc.cost++;save();pRolling=false;renderPlane();
   })();
 }
@@ -830,14 +893,14 @@ function planeswalk(){if(!curPlane())return;S.pc.pos=(S.pc.pos+1)%S.pc.deck.leng
 function pcHtml(){
   const tot=PL.cards?.length,on=PL.cards?PL.cards.filter(c=>!S.pc.off.includes(c.id)).length:0;
   return `<div class="pcm"><button class="tog" data-pc="on"><span>Planechase</span><i class="sw ${S.pc.on?'on':''}"></i></button>
-    ${S.pc.on?`<div class="pcrow"><button data-pc="walk">Planeswalk</button><button data-pc="shuffle">Shuffle</button></div>`:''}
-    <button data-pc="cards">Choose planes${tot?` (${on}/${tot})`:''}</button></div>`;
+    ${S.pc.on?`<div class="pcrow"><button data-pc="walk">${T('Planeswalk')}</button><button data-pc="shuffle">${T('Shuffle')}</button></div>`:''}
+    <button data-pc="cards">${T('Choose planes')}${tot?` (${on}/${tot})`:''}</button></div>`;
 }
 const planeFilter=()=>{const q=($('#pf')?.value||'').trim().toLowerCase();return(PL.cards||[]).filter(c=>!q||c.name.toLowerCase().includes(q)||c.set.toLowerCase()===q)};
 function showPlanes(){
-  sheet.innerHTML=`<div class="box wide" role="dialog" aria-label="Choose planes"><h2>Planes <small id="pcount"></small></h2>
-    <div class="srch"><input id="pf" type="search" placeholder="Filter by name or set code" autocomplete="off" aria-label="Filter planes"></div>
-    <div class="acts"><button data-pall="1">All on</button><button data-pall="0">All off</button></div>
+  sheet.innerHTML=`<div class="box wide" role="dialog" aria-label="${T('Choose planes')}"><h2>${T('Planes')} <small id="pcount"></small></h2>
+    <div class="srch"><input id="pf" type="search" placeholder="${T('Filter by name or set code')}" autocomplete="off" aria-label="${T('Filter planes')}"></div>
+    <div class="acts"><button data-pall="1">${T('All on')}</button><button data-pall="0">${T('All off')}</button></div>
     <div class="plist" id="plist"></div>
     <div class="acts"><button class="new" data-pdone>Done</button></div></div>`;
   sheet.hidden=false;loadPlanes();listPlanes();
@@ -846,21 +909,21 @@ function showPlanes(){
 const openSets=new Set();
 function listPlanes(){
   const l=$('#plist');if(!l)return;
-  if(!PL.cards){l.innerHTML=`<p class="msg">${PL.state==='err'?'Could not load the planes. Check the internet connection.':'Loading planes…'}</p>`;return}
+  if(!PL.cards){l.innerHTML=`<p class="msg">${PL.state==='err'?T('Could not load the planes. Check the internet connection.'):T('Loading planes…')}</p>`;return}
   const off=new Set(S.pc.off),q=($('#pf')?.value||'').trim(),sets=new Map();
   for(const c of planeFilter()){if(!sets.has(c.set))sets.set(c.set,[]);sets.get(c.set).push(c)}
   const order=[...sets].sort(([,a],[,b])=>a[0].fun-b[0].fun||(a[0].setName||a[0].set).localeCompare(b[0].setName||b[0].set));
   l.innerHTML=order.map(([k,cs])=>{const on=cs.filter(c=>!off.has(c.id)).length,op=q||openSets.has(k);
-    return `<div class="pset"><div class="pshead"><input type="checkbox" data-set="${k}"${on?' checked':''} data-mixed="${on&&on<cs.length?1:0}" aria-label="All planes in ${esc(cs[0].setName||k)}">
-      <button class="psname${op?' open':''}" data-open="${k}"><span>${esc(cs[0].setName||k)}</span><small>${cs[0].fun?'Test cards · ':''}${on}/${cs.length}</small>${ico('<path d="M6 9l6 6 6-6"/>')}</button></div>
-      ${op?`<div class="pcards">${cs.map(c=>`<label class="prow"><input type="checkbox" data-pid="${c.id}"${off.has(c.id)?'':' checked'}><span>${esc(c.name)}</span><small>${c.ph?'Phenomenon':'Plane'}</small></label>`).join('')}</div>`:''}</div>`}).join('')
-    ||'<p class="msg">No planes match.</p>';
+    return `<div class="pset"><div class="pshead"><input type="checkbox" data-set="${k}"${on?' checked':''} data-mixed="${on&&on<cs.length?1:0}" aria-label="${T('All planes in {n}',{n:esc(cs[0].setName||k)})}">
+      <button class="psname${op?' open':''}" data-open="${k}"><span>${esc(cs[0].setName||k)}</span><small>${cs[0].fun?T('Test cards')+' · ':''}${on}/${cs.length}</small>${ico('<path d="M6 9l6 6 6-6"/>')}</button></div>
+      ${op?`<div class="pcards">${cs.map(c=>`<label class="prow"><input type="checkbox" data-pid="${c.id}"${off.has(c.id)?'':' checked'}><span>${esc(c.name)}</span><small>${T(c.ph?'Phenomenon':'Plane')}</small></label>`).join('')}</div>`:''}</div>`}).join('')
+    ||'<p class="msg">'+T('No planes match.')+'</p>';
   l.querySelectorAll('[data-mixed="1"]').forEach(x=>x.indeterminate=true);
   planeCount();
 }
 function planeCount(){const e=$('#pcount');if(e&&PL.cards)e.textContent=`${PL.cards.length-S.pc.off.length}/${PL.cards.length}`}
 const I_TURN='<path d="M4.5 12a7.5 7.5 0 0 1 13.2-4.9M19.5 12a7.5 7.5 0 0 1-13.2 4.9"/><path d="M18 3v4.5h-4.5M6 21v-4.5h4.5"/>';
-function showZoom(src){const z=$('#zoom');z.innerHTML=`<img src="${src}" alt=""><button class="zturn" aria-label="Rotate 180 degrees">${ico(I_TURN)}</button>`;z.hidden=false}
+function showZoom(src){const z=$('#zoom');z.innerHTML=`<img src="${src}" alt=""><button class="zturn" aria-label="${T('Rotate 180 degrees')}">${ico(I_TURN)}</button>`;z.hidden=false}
 $('#zoom').addEventListener('click',e=>{const z=$('#zoom');if(e.target.closest('.zturn'))z.classList.toggle('flip');else z.hidden=true});
 
 /* ==== Apparaten koppelen (WebRTC, alleen lokaal netwerk, uitwisseling via QR-codes) ====
@@ -896,7 +959,7 @@ function sdpOf(d,setup){
     ...d.c.map(([a,p],k)=>`a=candidate:${k+1} 1 udp ${2122260223-k} ${a} ${+p} typ host generation 0`),''].join('\r\n');
 }
 const iceDone=pc=>new Promise(r=>{if(pc.iceGatheringState==='complete')return r();const t=setTimeout(r,3000);pc.addEventListener('icegatheringstatechange',()=>{if(pc.iceGatheringState==='complete'){clearTimeout(t);r()}})});
-function newPc(){const pc=new RTCPeerConnection({iceServers:[]});pc.onconnectionstatechange=()=>{if(['failed','closed'].includes(pc.connectionState)&&G.pc===pc)linkReset(G.role?'Connection lost.':'Could not connect. Make sure both devices are on the same Wi-Fi (not a guest network) and try again.')};G.pc=pc;return pc}
+function newPc(){const pc=new RTCPeerConnection({iceServers:[]});pc.onconnectionstatechange=()=>{if(['failed','closed'].includes(pc.connectionState)&&G.pc===pc)linkReset(G.role?T('Connection lost.'):T('Could not connect. Make sure both devices are on the same Wi-Fi (not a guest network) and try again.'))};G.pc=pc;return pc}
 
 function linkReset(msg){
   stopScan();clearTimeout(G.timer);const wasGuest=G.role==='guest',pc=G.pc;G.role=null;G.ch=null;G.pc=null;
@@ -907,31 +970,31 @@ function linkReset(msg){
 function setupCh(ch,role){
   ch.onopen=()=>{clearTimeout(G.timer);G.ch=ch;G.role=role;
     if(role==='guest'){try{localStorage.setItem(GBK,JSON.stringify(S))}catch(e){}}else linkSync();
-    stopScan();sheet.hidden=true;render();toast(role==='host'?'Device linked.':'Linked to the host device.')};
+    stopScan();sheet.hidden=true;render();toast(T(role==='host'?'Device linked.':'Linked to the host device.'))};
   ch.onmessage=e=>{if(typeof e.data!=='string')return;role==='host'?fromGuest(e.data):fromHost(e.data)};
-  ch.onclose=()=>{if(G.ch===ch)linkReset('Connection lost.')};
+  ch.onclose=()=>{if(G.ch===ch)linkReset(T('Connection lost.'))};
 }
 async function hostStart(){
   linkReset();const pc=newPc();setupCh(pc.createDataChannel('lt',{ordered:true}),'host');
   await pc.setLocalDescription(await pc.createOffer());await iceDone(pc);
   const code=pack(pc.localDescription.sdp,'o');
-  if(code.endsWith('|'))return linkReset('No local network found. Connect this device to Wi-Fi and try again.');
-  showCode('Step 1 of 2','On the other device open Settings → Link devices → Join, and scan this code. Then tap “Scan reply”.',code,'<button class="new" data-lscan="a">Scan reply</button>');
+  if(code.endsWith('|'))return linkReset(T('No local network found. Connect this device to Wi-Fi and try again.'));
+  showCode(T('Step 1 of 2'),T('On the other device open Settings → Link devices → Join, and scan this code. Then tap “Scan reply”.'),code,'<button class="new" data-lscan="a">'+T('Scan reply')+'</button>');
 }
 async function hostAnswer(txt){
-  const d=unpack(txt,'a');if(!d||!G.pc||G.pc.signalingState!=='have-local-offer')return toast('That is not a reply code from this app.');
-  stopScan();showWait('Connecting…');G.timer=setTimeout(()=>linkReset('Could not connect. Make sure both devices are on the same Wi-Fi (not a guest network) and try again.'),12000);
-  try{await G.pc.setRemoteDescription({type:'answer',sdp:sdpOf(d,'active')})}catch(e){linkReset('That reply code did not work. Start again.')}
+  const d=unpack(txt,'a');if(!d||!G.pc||G.pc.signalingState!=='have-local-offer')return toast(T('That is not a reply code from this app.'));
+  stopScan();showWait(T('Connecting…'));G.timer=setTimeout(()=>linkReset(T('Could not connect. Make sure both devices are on the same Wi-Fi (not a guest network) and try again.')),12000);
+  try{await G.pc.setRemoteDescription({type:'answer',sdp:sdpOf(d,'active')})}catch(e){linkReset(T('That reply code did not work. Start again.'))}
 }
 async function guestJoin(txt){
-  const d=unpack(txt,'o');if(!d)return toast('That is not a host code from this app.');
+  const d=unpack(txt,'o');if(!d)return toast(T('That is not a host code from this app.'));
   stopScan();linkReset();const pc=newPc();pc.ondatachannel=e=>{if(e.channel.label==='lt')setupCh(e.channel,'guest')};
   try{await pc.setRemoteDescription({type:'offer',sdp:sdpOf(d,'actpass')});await pc.setLocalDescription(await pc.createAnswer());await iceDone(pc)}
-  catch(e){return linkReset('That code did not work. Ask the host to start again.')}
+  catch(e){return linkReset(T('That code did not work. Ask the host to start again.'))}
   const code=pack(pc.localDescription.sdp,'a');
-  if(code.endsWith('|'))return linkReset('No local network found. Connect this device to Wi-Fi and try again.');
-  G.timer=setTimeout(()=>{if(!G.role)linkReset('Could not connect. Make sure both devices are on the same Wi-Fi (not a guest network) and try again.')},120000);
-  showCode('Step 2 of 2','Let the host device scan this code.',code,'');
+  if(code.endsWith('|'))return linkReset(T('No local network found. Connect this device to Wi-Fi and try again.'));
+  G.timer=setTimeout(()=>{if(!G.role)linkReset(T('Could not connect. Make sure both devices are on the same Wi-Fi (not a guest network) and try again.'))},120000);
+  showCode(T('Step 2 of 2'),T('Let the host device scan this code.'),code,'');
 }
 
 /* host: berichten van een gast — alleen bekende acties, met grenzen en een snelheidslimiet */
@@ -954,7 +1017,7 @@ function fromGuest(raw){
 function cleanState(s){
   if(!s||typeof s!=='object'||!Array.isArray(s.players)||s.players.length!==6)return null;
   const int=(v,a,b,d)=>isInt(v,a,b)?v:d,n=int(s.n,2,6,4),six=(a,lo,hi)=>[0,1,2,3,4,5].map(k=>int(Array.isArray(a)?a[k]:0,lo,hi,0));
-  const players=s.players.map((p,i)=>{p=p&&typeof p==='object'?p:{};const o={name:typeof p.name==='string'&&p.name.trim()?p.name.slice(0,18):`Player ${i+1}`,
+  const players=s.players.map((p,i)=>{p=p&&typeof p==='object'?p:{};const o={name:typeof p.name==='string'&&p.name.trim()?p.name.slice(0,18):T('Player {n}',{n:i+1}),
       color:int(p.color,0,5,i),life:int(p.life,-99999,99999,40),cmd:six(p.cmd,0,999)};
     if(okArt(p.art)){o.art=p.art;o.artist=typeof p.artist==='string'?p.artist.slice(0,60):''}
     if(p.cn&&typeof p.cn==='object')o.cn=Object.fromEntries(COUNTERS.filter(t=>Object.hasOwn(p.cn,t.k)).map(t=>[t.k,int(p.cn[t.k],0,999,0)]));
@@ -980,47 +1043,47 @@ function fromHost(raw){
 /* schermen */
 function qrSvg(t){try{const q=qrcode(0,'M');q.addData(t);q.make();return q.createSvgTag({cellSize:6,margin:3,scalable:true})}catch(e){return ''}}
 function showLink(){
-  const st=G.role==='host'?'This device is the host. One device is linked.':G.role==='guest'?'This device is linked to a host. Its own game is kept and comes back when you disconnect.':'';
-  sheet.innerHTML=`<div class="box lbox" role="dialog" aria-label="Link devices"><h2>Link devices</h2>
-    ${G.role?`<p class="lmsg">${st}</p><div class="acts"><button data-loff>Disconnect</button><button class="new" data-close>Done</button></div>`:
-    `<p class="lmsg">Use two devices on the same Wi-Fi as one tracker. Nothing goes through the internet: the devices exchange two QR codes and then talk directly, encrypted.</p>
-     <div class="acts"><button class="new" data-lhost>Host (show code)</button><button data-lscan="o">Join (scan code)</button></div>
-     <div class="acts"><button data-back>Back</button></div>`}</div>`;
+  const st=G.role==='host'?T('This device is the host. One device is linked.'):G.role==='guest'?T('This device is linked to a host. Its own game is kept and comes back when you disconnect.'):'';
+  sheet.innerHTML=`<div class="box lbox" role="dialog" aria-label="${T('Link devices')}"><h2>${T('Link devices')}</h2>
+    ${G.role?`<p class="lmsg">${st}</p><div class="acts"><button data-loff>${T('Disconnect')}</button><button class="new" data-close>${T('Done')}</button></div>`:
+    `<p class="lmsg">${T('Use two devices on the same Wi-Fi as one tracker. Nothing goes through the internet: the devices exchange two QR codes and then talk directly, encrypted.')}</p>
+     <div class="acts"><button class="new" data-lhost>${T('Host (show code)')}</button><button data-lscan="o">${T('Join (scan code)')}</button></div>
+     <div class="acts"><button data-back>${T('Back')}</button></div>`}</div>`;
   sheet.hidden=false;
 }
-function showWait(t){sheet.innerHTML=`<div class="box lbox" role="dialog" aria-label="Link devices"><h2>Link devices</h2><p class="lmsg">${t}</p><div class="acts"><button data-loff>Cancel</button></div></div>`;sheet.hidden=false}
+function showWait(t){sheet.innerHTML=`<div class="box lbox" role="dialog" aria-label="${T('Link devices')}"><h2>${T('Link devices')}</h2><p class="lmsg">${t}</p><div class="acts"><button data-loff>${T('Cancel')}</button></div></div>`;sheet.hidden=false}
 function showCode(step,help,code,btn){
-  sheet.innerHTML=`<div class="box lbox" role="dialog" aria-label="Link devices"><h2>Link devices <small>${step}</small></h2><p class="lmsg">${help}</p>
+  sheet.innerHTML=`<div class="box lbox" role="dialog" aria-label="${T('Link devices')}"><h2>${T('Link devices')} <small>${step}</small></h2><p class="lmsg">${help}</p>
     <div class="qr">${qrSvg(code)}</div>
-    <details class="lalt"><summary>Can't scan?</summary><p class="lmsg">Copy this code to the other device:</p><textarea readonly rows="3">${esc(code)}</textarea><button data-lcopy>Copy code</button></details>
-    <div class="acts">${btn}<button data-loff>Cancel</button></div></div>`;
+    <details class="lalt"><summary>${T("Can't scan?")}</summary><p class="lmsg">${T('Copy this code to the other device:')}</p><textarea readonly rows="3">${esc(code)}</textarea><button data-lcopy>${T('Copy code')}</button></details>
+    <div class="acts">${btn}<button data-loff>${T('Cancel')}</button></div></div>`;
   sheet.hidden=false;sheet.querySelector('textarea').value=code;
 }
 /* camera alleen tijdens het scannen; daarna direct uit. Geen scanner in de browser: code plakken */
 async function startScan(kind){
   stopScan();const hasBD='BarcodeDetector' in window;
-  sheet.innerHTML=`<div class="box lbox" role="dialog" aria-label="Scan code"><h2>Scan ${kind==='o'?'the host':'the reply'} code</h2>
-    ${hasBD?'<video class="lvid" playsinline muted></video><p class="lmsg" id="lst">Point the camera at the code on the other device.</p>':'<p class="lmsg">This browser cannot scan QR codes. Paste the code text instead.</p>'}
-    <form class="lpaste"><textarea id="lcode" rows="3" placeholder="Or paste the code here" autocomplete="off"></textarea><button>Use code</button></form>
-    <div class="acts"><button data-loff>Cancel</button></div></div>`;
+  sheet.innerHTML=`<div class="box lbox" role="dialog" aria-label="${T('Scan code')}"><h2>${T(kind==='o'?'Scan the host code':'Scan the reply code')}</h2>
+    ${hasBD?'<video class="lvid" playsinline muted></video><p class="lmsg" id="lst">'+T('Point the camera at the code on the other device.')+'</p>':'<p class="lmsg">'+T('This browser cannot scan QR codes. Paste the code text instead.')+'</p>'}
+    <form class="lpaste"><textarea id="lcode" rows="3" placeholder="${T('Or paste the code here')}" autocomplete="off"></textarea><button>${T('Use code')}</button></form>
+    <div class="acts"><button data-loff>${T('Cancel')}</button></div></div>`;
   sheet.hidden=false;sheet.querySelector('.lpaste').dataset.kind=kind;if(!hasBD)return;
   try{
     const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false}),v=sheet.querySelector('.lvid');
     if(!v){stream.getTracks().forEach(t=>t.stop());return}
     G.scan={stream,on:true};v.srcObject=stream;await v.play();const bd=new BarcodeDetector({formats:['qr_code']});
     (async function loop(){if(!G.scan?.on)return;try{const r=await bd.detect(v);const hit=r.find(x=>x.rawValue?.startsWith('LT1|'));if(hit){useCode(kind,hit.rawValue);return}}catch(e){}setTimeout(loop,250)})();
-  }catch(e){const s=$('#lst');if(s)s.textContent='The camera could not be opened. Allow camera access, or paste the code below.'}
+  }catch(e){const s=$('#lst');if(s)s.textContent=T('The camera could not be opened. Allow camera access, or paste the code below.')}
 }
 function stopScan(){if(G.scan){G.scan.on=false;G.scan.stream.getTracks().forEach(t=>t.stop());G.scan=null}}
 function useCode(kind,txt){kind==='o'?guestJoin(txt):hostAnswer(txt)}
 sheet.addEventListener('submit',e=>{const f=e.target.closest('.lpaste');if(!f)return;e.preventDefault();useCode(f.dataset.kind,$('#lcode').value)});
 sheet.addEventListener('click',e=>{if(e.target===sheet)return stopScan();const b=e.target.closest('button');if(!b)return;const ds=b.dataset;
   if('close' in ds||'back' in ds)stopScan();
-  if('lhost' in ds)hostStart().catch(()=>linkReset('Linking is not supported on this device.'));
+  if('lhost' in ds)hostStart().catch(()=>linkReset(T('Linking is not supported on this device.')));
   else if(ds.lscan)startScan(ds.lscan);
-  else if('loff' in ds){linkReset(G.role?'Disconnected.':'');showLink()}
+  else if('loff' in ds){linkReset(G.role?T('Disconnected.'):'');showLink()}
   else if('llink' in ds)showLink();
-  else if('lcopy' in ds){const t=sheet.querySelector('.lalt textarea');navigator.clipboard?.writeText(t.value).then(()=>toast('Code copied.'),()=>{t.select()})}
+  else if('lcopy' in ds){const t=sheet.querySelector('.lalt textarea');navigator.clipboard?.writeText(t.value).then(()=>toast(T('Code copied.')),()=>{t.select()})}
 });
 try{const b=JSON.parse(localStorage.getItem(GBK));if(b?.players?.length===6){S=b;save()}localStorage.removeItem(GBK)}catch(e){}
 
