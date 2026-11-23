@@ -1,7 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" translate="no">
 <head>
 <meta charset="utf-8">
+<!-- de app vertaalt zelf (NL/EN); browservertaling zou Magic-termen verhaspelen ("Back" werd "Rug") -->
+<meta name="google" content="notranslate">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#14121a">
@@ -348,25 +350,25 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
 let LANG=(()=>{try{const l=localStorage.getItem('lt-lang');if(l==='nl'||l==='en')return l}catch(e){}return /^nl\b/i.test(navigator.language||'')?'nl':'en'})();
 const NL={
   'White':'Wit','Blue':'Blauw','Black':'Zwart','Red':'Rood','Green':'Groen','Gold':'Goud','Colorless':'Kleurloos',
-  'Poison':'Gif','Commander tax':'Commander-tax','Energy':'Energie','Experience':'Ervaring','Rad':'Rad','Tickets':'Tickets','Monarch':'Monarch','Initiative':'Initiatief',"City's blessing":'Stadszegen',
-  'Player counters':'Spelertellers','Close':'Sluiten','Illus.':'Illus.','Goes first':'Begint','Commander damage':'Commandant-schade','End turn':'Einde beurt',
-  'Commander damage from {n} minus 1':'Commandant-schade van {n} min 1','Commander damage from {n} plus 1':'Commandant-schade van {n} plus 1',
+  'Poison':'Gif','Commander tax':'Commander tax','Energy':'Energie','Experience':'Ervaring','Rad':'Rad','Tickets':'Tickets','Monarch':'Monarch','Initiative':'Initiative',"City's blessing":"City's blessing",
+  'Player counters':'Spelertellers','Close':'Sluiten','Illus.':'Illus.','Goes first':'Begint','Commander damage':'Commanderschade','End turn':'Einde beurt',
+  'Commander damage from {n} minus 1':'Commanderschade van {n} min 1','Commander damage from {n} plus 1':'Commanderschade van {n} plus 1',
   'Turn and match history':'Beurt en spelgeschiedenis','T':'R','Number of players':'Aantal spelers','Starting life':'Startlevens','Who goes first':'Wie begint',
   'Dice':'Dobbelstenen','Mana and storm':'Mana en storm','Restart':'Opnieuw beginnen','Rotate view 180 degrees':'Weergave 180 graden draaien',
-  'Linked device':'Gekoppeld apparaat','Names and settings':'Namen en instellingen','Eliminated':'Uitgeschakeld','10 poison':'10 gif',
-  '{n} commander damage':'{n} commandant-schade','Minus 1':'Min 1','Plus 1':'Plus 1','Commander damage taken':'Ontvangen commandant-schade',
+  'Linked device':'Gekoppeld apparaat','Names and settings':'Namen en instellingen','Eliminated':'Uitgeschakeld','10 poison':'10 gifmarkers',
+  '{n} commander damage':'{n} commanderschade','Minus 1':'Min 1','Plus 1':'Plus 1','Commander damage taken':'Ontvangen commanderschade',
   'Turn {r}':'Ronde {r}',"{n}'s turn":'Beurt van {n}','In progress':'Bezig','No life changes':'Geen levenswijzigingen',
-  'commander damage from {n}':'commandant-schade van {n}','Match history':'Spelgeschiedenis','Tap the crown to choose who goes first.':'Tik op de kroon om te kiezen wie begint.',
+  'commander damage from {n}':'commanderschade van {n}','Match history':'Spelgeschiedenis','Tap the crown to choose who goes first.':'Tik op de kroon om te kiezen wie begint.',
   'Undo end turn':'Einde beurt ongedaan maken','Done':'Klaar','Only the host device can change this.':'Alleen het hostapparaat kan dit aanpassen.',
-  'Player {n} name':'Naam speler {n}','Player {n}':'Speler {n}','Flip a coin':'Munt opgooien','Coin':'Munt','Heads':'Kop','Tails':'Munt',
-  'Custom starting life':'Eigen startlevens','Set':'Instellen','{n} minus 1':'{n} min 1','{n} plus 1':'{n} plus 1','Reset to zero':'Op nul zetten',
+  'Player {n} name':'Naam speler {n}','Player {n}':'Speler {n}','Flip a coin':'Munt opgooien','Coin':'Muntstuk','Heads':'Kop','Tails':'Munt',
+  'Custom starting life':'Eigen startlevens','Set':'OK','{n} minus 1':'{n} min 1','{n} plus 1':'{n} plus 1','Reset to zero':'Op nul zetten',
   'Rotate 180 degrees':'180 graden draaien','Save profile of player {n}':'Profiel van speler {n} opslaan','Load a profile for player {n}':'Profiel laden voor speler {n}',
   'Choose art for player {n}':'Afbeelding kiezen voor speler {n}','Settings':'Instellingen','Fullscreen':'Volledig scherm','Link devices':'Apparaten koppelen',
   'linked · this device is the host':'gekoppeld · dit apparaat is de host','linked to a host device':'gekoppeld aan een hostapparaat',
   'use a phone and a tablet as one tracker':'gebruik een telefoon en tablet als één tracker',
   'Names, colors, art and game rules are set on the host device.':'Namen, kleuren, afbeeldingen en spelregels stel je in op het hostapparaat.',
   'Names and colors':'Namen en kleuren','Language':'Taal','Theme':'Thema','Auto':'Automatisch','Light':'Licht','Dark':'Donker',
-  'Commander damage reduces life':'Commandant-schade gaat van levens af','Show opponents for commander damage':'Tegenstanders tonen voor commandant-schade',
+  'Commander damage reduces life':'Commanderschade gaat van levens af','Show opponents for commander damage':'Tegenstanders tonen voor commanderschade',
   'Track turn order and history':'Beurtvolgorde en geschiedenis bijhouden','One-sided view':'Eenzijdige weergave','all players face this side':'alle spelers naar deze kant',
   'Profiles':'Profielen','Load profile':'Profiel laden','for {n}':'voor {n}','Delete profile {n}':'Profiel {n} verwijderen',
   'No saved profiles yet. Use the save button next to a name to store its name, color and art.':'Nog geen opgeslagen profielen. Gebruik de opslaanknop naast een naam om naam, kleur en afbeelding te bewaren.',
@@ -376,11 +378,11 @@ const NL={
   'No artwork found for this card.':'Geen afbeeldingen gevonden voor deze kaart.',
   'Search failed. Check the internet connection and try again.':'Zoeken mislukt. Controleer de internetverbinding en probeer het opnieuw.',
   'Could not load the planes.':'De planes konden niet geladen worden.','Try again':'Opnieuw proberen','No planes selected.':'Geen planes geselecteerd.',
-  'Loading planes…':'Planes laden…','Roll the planar die':'Planar die gooien','Reset roll cost':'Worpkosten op nul zetten','Planeswalk':'Planeswalk','Chaos':'Chaos',
+  'Loading planes…':'Planes laden…','Roll the planar die':'Planar-dobbelsteen gooien','Reset roll cost':'Worpkosten op nul zetten','Planeswalk':'Planeswalk','Chaos':'Chaos',
   'Nothing happens':'Er gebeurt niets','Shuffle':'Schudden','Choose planes':'Planes kiezen','Planes':'Planes','Filter by name or set code':'Filter op naam of setcode',
   'Filter planes':'Planes filteren','All on':'Alles aan','All off':'Alles uit',
   'Could not load the planes. Check the internet connection.':'De planes konden niet geladen worden. Controleer de internetverbinding.',
-  'All planes in {n}':'Alle planes in {n}','Test cards':'Testkaarten','Phenomenon':'Fenomeen','Plane':'Plane','No planes match.':'Geen planes gevonden.',
+  'All planes in {n}':'Alle planes in {n}','Test cards':'Testkaarten','Phenomenon':'Phenomenon','Plane':'Plane','No planes match.':'Geen planes gevonden.',
   'Could not connect. Make sure both devices are on the same Wi-Fi (not a guest network) and try again.':'Verbinden lukte niet. Zorg dat beide apparaten op hetzelfde wifi zitten (geen gastnetwerk) en probeer het opnieuw.',
   'Connection lost.':'Verbinding verbroken.','Device linked.':'Apparaat gekoppeld.','Linked to the host device.':'Gekoppeld aan het hostapparaat.',
   'No local network found. Connect this device to Wi-Fi and try again.':'Geen lokaal netwerk gevonden. Verbind dit apparaat met wifi en probeer het opnieuw.',
